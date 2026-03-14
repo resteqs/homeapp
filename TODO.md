@@ -1,0 +1,8 @@
+- Every tab displays "Startseite" or "Home", this should be completly removed.
+- Category names do not translate when switching from german to english
+- English product names are not recognized and category is not displayed
+- Hold an item to show select menu
+- Delte all items option in the select menu
+- Move to another list in the select menu
+- Swiping right should open the edit menu of the item
+- Allow to delte a grocery list from the three dot menu

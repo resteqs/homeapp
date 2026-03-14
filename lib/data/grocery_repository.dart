@@ -165,6 +165,19 @@ class GroceryRepository extends ChangeNotifier {
     unawaited(sync());
   }
 
+  Future<void> deleteItems(List<GroceryItem> items) async {
+    final now = DateTime.now().toUtc();
+    final updatedItems = items.map((item) => item.copyWith(
+      updatedAt: now,
+      deletedAt: now,
+      syncStatus: 'pending_delete',
+    )).toList();
+
+    await _localStore.upsertItems(updatedItems);
+    await refreshFromLocal();
+    unawaited(sync());
+  }
+
   Future<void> updateItemDetails(GroceryItem item, String newName, int newQuantity) async {
     final updated = item.copyWith(
       name: newName,
@@ -191,7 +204,7 @@ class GroceryRepository extends ChangeNotifier {
           )
         ''')
         .order('created_at');
-    
+
     return List<Map<String, dynamic>>.from(response);
   }
 

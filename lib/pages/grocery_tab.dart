@@ -69,6 +69,16 @@ class _GroceryTabState extends State<GroceryTab> {
     _fetchLists();
   }
 
+  Future<void> _deleteItem(GroceryItem item) async {
+    await _repository.deleteItem(item);
+    _fetchLists();
+  }
+
+  Future<void> _deleteBoughtItems(List<GroceryItem> boughtItems) async {
+    await _repository.deleteItems(boughtItems);
+    _fetchLists();
+  }
+
 
 
   @override
@@ -86,30 +96,104 @@ class _GroceryTabState extends State<GroceryTab> {
     return map;
   }
 
-  String _getIconNameForCategory(String category) {
+  _CategoryVisual _getCategoryVisual(String category) {
     final cat = category.toLowerCase();
-    if (cat.contains('obst') || cat.contains('gemüse') || cat.contains('fruit') || cat.contains('veg') || cat.contains('apple')) {
-      return 'apple';
+    if (cat.contains('obst') || cat.contains('gemuse') || cat.contains('gemüse') || cat.contains('fruit') || cat.contains('veg') || cat.contains('apple')) {
+      return const _CategoryVisual(Icons.eco, Color(0xFF3A9D23));
     } else if (cat.contains('dairy') || cat.contains('milk') || cat.contains('käse') || cat.contains('molk') || cat.contains('milch')) {
-      return 'milk-bottle';
+      return const _CategoryVisual(Icons.local_drink, Color(0xFF2A76D2));
     } else if (cat.contains('bakery') || cat.contains('bäckerei') || cat.contains('bread') || cat.contains('brot')) {
-      return 'bread';
+      return const _CategoryVisual(Icons.bakery_dining, Color(0xFFD18B2A));
     } else if (cat.contains('drink') || cat.contains('getränk') || cat.contains('water') || cat.contains('wasser')) {
-      return 'water';
+      return const _CategoryVisual(Icons.water_drop, Color(0xFF1C9CEB));
     } else if (cat.contains('snack') || cat.contains('süß') || cat.contains('sweet')) {
-      return 'chocolate-bar';
+      return const _CategoryVisual(Icons.cookie, Color(0xFFE07D26));
     } else if (cat.contains('care') || cat.contains('clean') || cat.contains('reinigung') || cat.contains('hygiene') || cat.contains('pflege')) {
-      return 'soap';
+      return const _CategoryVisual(Icons.clean_hands, Color(0xFF8E57D6));
     } else if (cat.contains('meat') || cat.contains('fleisch') || cat.contains('fish') || cat.contains('fisch') || cat.contains('deli')) {
-      return 'fast-food';
+      return const _CategoryVisual(Icons.set_meal, Color(0xFFDB4A39));
     }
-    return 'shopping-bag--v1';
+    return const _CategoryVisual(Icons.category, Color(0xFF5F6D7A));
+  }
+
+  Widget _buildItemTile({required GroceryItem item, required bool isBought}) {
+    final categoryVisual = _getCategoryVisual(item.category);
+
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          Icons.delete,
+          color: Theme.of(context).colorScheme.onErrorContainer,
+        ),
+      ),
+      onDismissed: (_) => _deleteItem(item),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: Checkbox(
+          value: item.isBought,
+          onChanged: (_) => _toggleItem(item),
+          shape: const CircleBorder(),
+          activeColor: Colors.blueAccent,
+        ),
+        title: Text(
+          item.name,
+          style: TextStyle(
+            fontWeight: isBought ? FontWeight.w400 : FontWeight.w500,
+            fontSize: 16,
+            decoration: isBought ? TextDecoration.lineThrough : TextDecoration.none,
+            color: isBought ? Theme.of(context).colorScheme.outline : null,
+          ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${item.quantity}',
+                style: TextStyle(
+                  color: isBought
+                      ? Theme.of(context).colorScheme.outline
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                categoryVisual.icon,
+                size: 18,
+                color: isBought
+                    ? Theme.of(context).colorScheme.outline
+                    : categoryVisual.color,
+              ),
+            ],
+          ),
+        ),
+        onTap: () => _showEditModal(item),
+      ),
+    );
   }
 
   Future<void> _showEditModal(GroceryItem item) async {
     final nameController = TextEditingController(text: item.name);
+    final nameFocusNode = FocusNode();
+    bool focusScheduled = false;
     int quantity = item.quantity;
-    
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -117,86 +201,104 @@ class _GroceryTabState extends State<GroceryTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        if (!focusScheduled) {
+          focusScheduled = true;
+          // Delay focus so keyboard animation does not compete with sheet entrance.
+          Future<void>.delayed(const Duration(milliseconds: 220), () {
+            if (nameFocusNode.canRequestFocus) {
+              nameFocusNode.requestFocus();
+            }
+          });
+        }
+
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 24, right: 24, top: 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(AppLocalizations.of(context)!.groceryEditItem, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Name', 
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ),
-                    autofocus: true,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(AppLocalizations.of(context)!.groceryQuantity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: quantity > 1 ? () => setModalState(() => quantity--) : null,
-                            ),
-                            Container(
-                              constraints: const BoxConstraints(minWidth: 32),
-                              alignment: Alignment.center,
-                              child: Text('$quantity', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () => setModalState(() => quantity++),
-                            ),
-                          ],
-                        ),
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 24, right: 24, top: 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(AppLocalizations.of(context)!.groceryEditItem, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: nameController,
+                      focusNode: nameFocusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                      ),
-                      onPressed: () {
-                        if (nameController.text.trim().isNotEmpty) {
-                          _repository.updateItemDetails(item, nameController.text.trim(), quantity);
-                          Navigator.pop(context);
-                          _fetchLists();
-                        }
-                      },
-                      child: Text(AppLocalizations.of(context)!.grocerySaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(AppLocalizations.of(context)!.groceryQuantity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed: quantity > 1 ? () => setModalState(() => quantity--) : null,
+                              ),
+                              Container(
+                                constraints: const BoxConstraints(minWidth: 32),
+                                alignment: Alignment.center,
+                                child: Text('$quantity', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: () => setModalState(() => quantity++),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                        ),
+                        onPressed: () {
+                          if (nameController.text.trim().isNotEmpty) {
+                            _repository.updateItemDetails(item, nameController.text.trim(), quantity);
+                            Navigator.pop(context);
+                            _fetchLists();
+                          }
+                        },
+                        child: Text(AppLocalizations.of(context)!.grocerySaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Use a dedicated widget to absorb keyboard insets so that the main form does not rebuild during keyboard animation
+                    Builder(
+                      builder: (context) => SizedBox(height: MediaQuery.viewInsetsOf(context).bottom),
+                    ),
+                  ],
+                ),
               ),
             );
           }
         );
       }
     );
+
+    nameFocusNode.dispose();
+    nameController.dispose();
   }
 
   Widget _buildOverview() {
@@ -214,7 +316,7 @@ class _GroceryTabState extends State<GroceryTab> {
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
-      body: _lists.isEmpty 
+      body: _lists.isEmpty
           ? Center(child: Text(AppLocalizations.of(context)!.groceryNoLists))
           : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -226,7 +328,7 @@ class _GroceryTabState extends State<GroceryTab> {
                 final totalCount = items.length;
                 final boughtCount = items.where((i) => i['is_bought'] == true).length;
                 final progress = totalCount > 0 ? boughtCount / totalCount : 0.0;
-                
+
                 return Card(
                   elevation: 0,
                   color: Theme.of(context).colorScheme.surface,
@@ -272,9 +374,9 @@ class _GroceryTabState extends State<GroceryTab> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                '$boughtCount/$totalCount', 
+                                '$boughtCount/$totalCount',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w500, 
+                                  fontWeight: FontWeight.w500,
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 13,
                                 ),
@@ -318,7 +420,6 @@ class _GroceryTabState extends State<GroceryTab> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.person_add_alt), onPressed: () {}),
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
@@ -326,7 +427,7 @@ class _GroceryTabState extends State<GroceryTab> {
         animation: _repository,
         builder: (context, _) {
           if (_repository.isLoading) return const Center(child: CircularProgressIndicator());
-          
+
           if (_repository.listId == null) {
             return Center(child: Text(_repository.lastError ?? 'Could not load list.'));
           }
@@ -375,45 +476,7 @@ class _GroceryTabState extends State<GroceryTab> {
                                   final item = items[index];
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 4.0),
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      leading: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Checkbox(
-                                            value: item.isBought,
-                                            onChanged: (_) => _toggleItem(item),
-                                            shape: const CircleBorder(),
-                                            activeColor: Colors.blueAccent,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Image.network(
-                                            'https://img.icons8.com/pastel-glyph/64/${_getIconNameForCategory(item.category)}.png',
-                                            width: 28,
-                                            height: 28,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.shopping_bag_outlined, size: 28),
-                                          ),
-                                        ],
-                                      ),
-                                      title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-                                      trailing: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text('${item.quantity}', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold)),
-                                            const SizedBox(width: 8),
-                                            Icon(Icons.shopping_basket, size: 16, color: Theme.of(context).colorScheme.primary),
-                                          ],
-                                        ),
-                                      ),
-                                      onTap: () => _showEditModal(item),
-                                    ),
+                                    child: _buildItemTile(item: item, isBought: false),
                                   );
                                 },
                                 childCount: items.length,
@@ -427,7 +490,23 @@ class _GroceryTabState extends State<GroceryTab> {
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                         sliver: SliverToBoxAdapter(
-                          child: Text(AppLocalizations.of(context)!.groceryBoughtItems, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.outline)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.groceryBoughtItems,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.outline,
+                                    ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () => _deleteBoughtItems(boughtItems),
+                                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                                label: const Text('Delete all'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       SliverPadding(
@@ -438,39 +517,7 @@ class _GroceryTabState extends State<GroceryTab> {
                               final item = boughtItems[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 4.0),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  leading: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Checkbox(
-                                        value: item.isBought,
-                                        onChanged: (_) => _toggleItem(item),
-                                        shape: const CircleBorder(),
-                                        activeColor: Colors.blueAccent,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Image.network(
-                                        'https://img.icons8.com/pastel-glyph/64/${_getIconNameForCategory(item.category)}.png',
-                                        width: 28,
-                                        height: 28,
-                                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
-                                        colorBlendMode: BlendMode.srcIn,
-                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.shopping_bag_outlined, size: 28, color: Theme.of(context).colorScheme.outline),
-                                      ),
-                                    ],
-                                  ),
-                                  title: Text(
-                                    item.name, 
-                                    style: TextStyle(
-                                      decoration: TextDecoration.lineThrough, 
-                                      color: Theme.of(context).colorScheme.outline
-                                    )
-                                  ),
-                                  trailing: Text('${item.quantity}', style: TextStyle(color: Theme.of(context).colorScheme.outline)),
-                                  onTap: () => _showEditModal(item),
-                                ),
+                                child: _buildItemTile(item: item, isBought: true),
                               );
                             },
                             childCount: boughtItems.length,
@@ -542,4 +589,11 @@ class _GroceryTabState extends State<GroceryTab> {
       child: _showingOverview ? _buildOverview() : _buildDetailedList(),
     );
   }
+}
+
+class _CategoryVisual {
+  const _CategoryVisual(this.icon, this.color);
+
+  final IconData icon;
+  final Color color;
 }
