@@ -29,6 +29,7 @@ class _GroceryTabState extends State<GroceryTab> {
     final name = _textController.text;
     if (name.trim().isEmpty) return;
 
+    // Repository handles local-first write and async sync.
     _textController.clear();
     await _repository.addItem(name);
   }
@@ -38,6 +39,7 @@ class _GroceryTabState extends State<GroceryTab> {
   }
 
   Future<void> _deleteItem(GroceryItem item) async {
+    // Deletion is optimistic in UI and then hard-deleted remotely on sync.
     await _repository.deleteItem(item);
   }
 
@@ -105,6 +107,7 @@ class _GroceryTabState extends State<GroceryTab> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
+                      // Keep sync state visible so offline/online behavior is explicit.
                       _repository.isSyncing
                           ? 'Syncing changes...'
                           : (_repository.lastError == null

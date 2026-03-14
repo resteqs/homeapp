@@ -22,6 +22,7 @@ class _HomeTabState extends State<HomeTab> {
 
   Future<void> _loadProfile() async {
     try {
+      // Bootstrap first so profile/household records are guaranteed.
       await _supabase.rpc('ensure_user_household_and_default_lists');
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {

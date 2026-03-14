@@ -30,6 +30,7 @@ class _AuthPageState extends State<AuthPage> {
           email: email,
           password: passwordText,
         );
+        // Ensure required household/list records exist before entering app.
         await Supabase.instance.client.rpc('ensure_user_household_and_default_lists');
 
         if (!mounted) return;
@@ -43,6 +44,7 @@ class _AuthPageState extends State<AuthPage> {
 
         final user = res.user;
         if (user != null) {
+          // Use username only on first bootstrap; function is idempotent.
           await Supabase.instance.client.rpc(
             'ensure_user_household_and_default_lists',
             params: {'u_username': _usernameController.text.trim()},
@@ -52,6 +54,7 @@ class _AuthPageState extends State<AuthPage> {
         if (!mounted) return;
         if (mounted) {
           if (res.session == null) {
+            // Confirm-email projects return no session until verification.
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                content: Text('Registration successful! Please check your email to verify your account.'),
             ));

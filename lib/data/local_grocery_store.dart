@@ -23,6 +23,8 @@ class LocalGroceryStore {
       join(dbPath, 'homeapp_local.db'),
       version: 1,
       onCreate: (db, version) async {
+        // Local-first cache for grocery items. sync_status tracks pending writes
+        // so UI stays responsive while network sync runs in the background.
         await db.execute('''
           CREATE TABLE local_grocery_items(
             id TEXT PRIMARY KEY,
@@ -124,6 +126,8 @@ class LocalGroceryStore {
 
   Future<void> markUpsertSynced(String id) async {
     final db = await database;
+    // Guard against race conditions: only mark rows that are still pending
+    // upserts. If a row changed to pending_delete meanwhile, do not override it.
     await db.update(
       'local_grocery_items',
       {'sync_status': 'synced'},

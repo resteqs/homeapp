@@ -16,6 +16,7 @@ class _SettingsTabState extends State<SettingsTab> {
 
     setState(() => _isSigningOut = true);
     try {
+      // Router listens to auth state and will redirect back to auth screen.
       await Supabase.instance.client.auth.signOut();
     } catch (error) {
       if (!mounted) return;

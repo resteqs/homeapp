@@ -24,6 +24,8 @@ class GroceryRepository extends ChangeNotifier {
   List<GroceryItem> _items = const [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  // If sync is requested during an active run, trigger one more pass afterward
+  // so no local mutations are skipped.
   bool _syncQueued = false;
   String? _lastError;
   String? _listId;
@@ -39,6 +41,8 @@ class GroceryRepository extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Backend bootstrap guarantees profile, household membership, and at least
+      // one grocery list before any data read/write.
       final bootstrap = await _supabase.rpc('ensure_user_household_and_default_lists');
       final resolvedListId = bootstrap['grocery_list_id']?.toString();
       if (resolvedListId == null || resolvedListId.isEmpty) {
@@ -47,6 +51,7 @@ class GroceryRepository extends ChangeNotifier {
 
       _listId = resolvedListId;
       await _localStore.setMeta('active_grocery_list_id', resolvedListId);
+      // Show cached local data immediately, then reconcile with server.
       await refreshFromLocal();
       await sync();
 
@@ -86,6 +91,7 @@ class GroceryRepository extends ChangeNotifier {
     final name = rawName.trim();
     if (name.isEmpty) return;
 
+    // Local-first write: create immediately in SQLite, then sync in background.
     final now = DateTime.now().toUtc();
     final item = GroceryItem(
       id: _uuid.v4(),
@@ -104,6 +110,7 @@ class GroceryRepository extends ChangeNotifier {
   }
 
   Future<void> toggleItem(GroceryItem item) async {
+    // Local-first toggle for offline support and immediate UI feedback.
     final updated = item.copyWith(
       isBought: !item.isBought,
       updatedAt: DateTime.now().toUtc(),
@@ -116,6 +123,8 @@ class GroceryRepository extends ChangeNotifier {
   }
 
   Future<void> deleteItem(GroceryItem item) async {
+    // Mark as pending delete locally so item disappears right away. Sync will
+    // perform a hard delete on Supabase and then purge local row.
     final updated = item.copyWith(
       updatedAt: DateTime.now().toUtc(),
       deletedAt: DateTime.now().toUtc(),
@@ -160,6 +169,7 @@ class GroceryRepository extends ChangeNotifier {
 
       final pendingDeletes = await _localStore.getPendingDeletes(id);
       for (final item in pendingDeletes) {
+        // Hard delete in remote DB to satisfy strict deletion semantics.
         await _supabase
             .from('grocery_list_items')
             .delete()
