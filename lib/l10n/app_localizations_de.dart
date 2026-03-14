@@ -101,6 +101,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsLoggingOut => 'Abmelden...';
 
   @override
+  String get settingsAttributions => 'Namennennung';
+
+  @override
   String get settingsLanguage => 'Sprache';
 
   @override

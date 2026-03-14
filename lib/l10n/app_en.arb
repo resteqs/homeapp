@@ -43,6 +43,8 @@
     "settingsTitle": "Settings",
     "settingsLogout": "Log out",
     "settingsLoggingOut": "Signing out...",
+    
+    "settingsAttributions": "Attributions",
     "settingsLanguage": "Language",
     "langEnglish": "English",
     "langGerman": "Deutsch"

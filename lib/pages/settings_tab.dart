@@ -60,6 +60,26 @@ class _SettingsTabState extends State<SettingsTab> {
             ],
           ),
           const SizedBox(height: 16),
+          ListTile(
+            title: Text(AppLocalizations.of(context)!.settingsAttributions),
+            leading: const Icon(Icons.info_outline),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(AppLocalizations.of(context)!.settingsAttributions),
+                  content: const SelectableText('Icons by Icons8 (https://icons8.com)'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _isSigningOut ? null : _signOut,
             icon: const Icon(Icons.logout),

@@ -272,6 +272,12 @@ abstract class AppLocalizations {
   /// **'Signing out...'**
   String get settingsLoggingOut;
 
+  /// No description provided for @settingsAttributions.
+  ///
+  /// In en, this message translates to:
+  /// **'Attributions'**
+  String get settingsAttributions;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

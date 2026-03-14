@@ -29,6 +29,8 @@
     "settingsTitle": "Einstellungen",
     "settingsLogout": "Abmelden",
     "settingsLoggingOut": "Abmelden...",
+    
+    "settingsAttributions": "Namennennung",
     "settingsLanguage": "Sprache",
     "langEnglish": "English",
     "langGerman": "Deutsch"

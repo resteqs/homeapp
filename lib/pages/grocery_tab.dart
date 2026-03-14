@@ -86,6 +86,26 @@ class _GroceryTabState extends State<GroceryTab> {
     return map;
   }
 
+  String _getIconNameForCategory(String category) {
+    final cat = category.toLowerCase();
+    if (cat.contains('obst') || cat.contains('gemüse') || cat.contains('fruit') || cat.contains('veg') || cat.contains('apple')) {
+      return 'apple';
+    } else if (cat.contains('dairy') || cat.contains('milk') || cat.contains('käse') || cat.contains('molk') || cat.contains('milch')) {
+      return 'milk-bottle';
+    } else if (cat.contains('bakery') || cat.contains('bäckerei') || cat.contains('bread') || cat.contains('brot')) {
+      return 'bread';
+    } else if (cat.contains('drink') || cat.contains('getränk') || cat.contains('water') || cat.contains('wasser')) {
+      return 'water';
+    } else if (cat.contains('snack') || cat.contains('süß') || cat.contains('sweet')) {
+      return 'chocolate-bar';
+    } else if (cat.contains('care') || cat.contains('clean') || cat.contains('reinigung') || cat.contains('hygiene') || cat.contains('pflege')) {
+      return 'soap';
+    } else if (cat.contains('meat') || cat.contains('fleisch') || cat.contains('fish') || cat.contains('fisch') || cat.contains('deli')) {
+      return 'fast-food';
+    }
+    return 'shopping-bag--v1';
+  }
+
   Future<void> _showEditModal(GroceryItem item) async {
     final nameController = TextEditingController(text: item.name);
     int quantity = item.quantity;
@@ -358,11 +378,23 @@ class _GroceryTabState extends State<GroceryTab> {
                                     child: ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      leading: Checkbox(
-                                        value: item.isBought,
-                                        onChanged: (_) => _toggleItem(item),
-                                        shape: const CircleBorder(),
-                                        activeColor: Colors.blueAccent,
+                                      leading: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Checkbox(
+                                            value: item.isBought,
+                                            onChanged: (_) => _toggleItem(item),
+                                            shape: const CircleBorder(),
+                                            activeColor: Colors.blueAccent,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Image.network(
+                                            'https://img.icons8.com/pastel-glyph/64/${_getIconNameForCategory(item.category)}.png',
+                                            width: 28,
+                                            height: 28,
+                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.shopping_bag_outlined, size: 28),
+                                          ),
+                                        ],
                                       ),
                                       title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
                                       trailing: Container(
@@ -409,11 +441,25 @@ class _GroceryTabState extends State<GroceryTab> {
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  leading: Checkbox(
-                                    value: item.isBought,
-                                    onChanged: (_) => _toggleItem(item),
-                                    shape: const CircleBorder(),
-                                    activeColor: Colors.blueAccent,
+                                  leading: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Checkbox(
+                                        value: item.isBought,
+                                        onChanged: (_) => _toggleItem(item),
+                                        shape: const CircleBorder(),
+                                        activeColor: Colors.blueAccent,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Image.network(
+                                        'https://img.icons8.com/pastel-glyph/64/${_getIconNameForCategory(item.category)}.png',
+                                        width: 28,
+                                        height: 28,
+                                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                                        colorBlendMode: BlendMode.srcIn,
+                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.shopping_bag_outlined, size: 28, color: Theme.of(context).colorScheme.outline),
+                                      ),
+                                    ],
                                   ),
                                   title: Text(
                                     item.name, 
