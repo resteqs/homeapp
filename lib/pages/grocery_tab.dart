@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,11 +50,17 @@ class _GroceryTabState extends State<GroceryTab> {
     }
   }
 
+  /// Returns the device's primary language code, e.g. 'en', 'de'.
+  String get _locale {
+    final tag = PlatformDispatcher.instance.locale.languageCode;
+    return tag.isNotEmpty ? tag : 'en';
+  }
+
   Future<void> _addItem() async {
     final name = _textController.text;
     if (name.trim().isEmpty) return;
     _textController.clear();
-    await _repository.addItem(name);
+    await _repository.addItem(name, locale: _locale);
     _fetchLists();
   }
 
@@ -321,9 +329,24 @@ class _GroceryTabState extends State<GroceryTab> {
                         ),
                       ),
                     ...groupedToBuy.entries.map((entry) {
+                      final categoryName = entry.key;
                       final items = entry.value;
                       return SliverMainAxisGroup(
                         slivers: [
+                          // Category header
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
+                            sliver: SliverToBoxAdapter(
+                              child: Text(
+                                categoryName,
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
                           SliverPadding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
                             sliver: SliverList(

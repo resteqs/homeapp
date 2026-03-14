@@ -84,12 +84,40 @@ class GroceryRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addItem(String rawName) async {
+  /// Looks up a category name for [itemName] using [locale] (e.g. 'en', 'de').
+  /// Queries global_items where name_translations->>locale matches, then returns
+  /// the category name in the same locale. Falls back to 'Other' if no match.
+  Future<String> lookupCategory(String itemName, {String locale = 'en'}) async {
+    try {
+      final results = await _supabase
+          .from('global_items')
+          .select('categories!inner(name_translations)')
+          .ilike('name_translations->>$locale', itemName.trim())
+          .limit(1);
+
+      if (results.isNotEmpty) {
+        final catTranslations =
+            results[0]['categories']['name_translations'] as Map<String, dynamic>?;
+        // Return the localized category name, falling back through en then key.
+        return catTranslations?[locale]?.toString() ??
+            catTranslations?['en']?.toString() ??
+            'Other';
+      }
+    } catch (_) {
+      // If offline or table not ready, fall through to default.
+    }
+    return 'Other';
+  }
+
+  Future<void> addItem(String rawName, {String locale = 'en'}) async {
     final id = _listId;
     if (id == null) return;
 
     final name = rawName.trim();
     if (name.isEmpty) return;
+
+    // Resolve category before writing (best-effort; falls back to 'Other').
+    final category = await lookupCategory(name, locale: locale);
 
     // Local-first write: create immediately in SQLite, then sync in background.
     final now = DateTime.now().toUtc();
@@ -97,7 +125,7 @@ class GroceryRepository extends ChangeNotifier {
       id: _uuid.v4(),
       listId: id,
       name: name,
-      category: 'Other',
+      category: category,
       isBought: false,
       updatedAt: now,
       deletedAt: null,
