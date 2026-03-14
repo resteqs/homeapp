@@ -3,6 +3,7 @@ import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:homeapp/globals/app_state.dart';
 import 'package:homeapp/globals/router.dart';
 
@@ -12,11 +13,14 @@ late final SharedPreferences sharedPrefs;
 @NowaGenerated()
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: ".env");
+  
   sharedPrefs = await SharedPreferences.getInstance();
 
   await Supabase.initialize(
-    url: 'https://bhjjqrgeozcmdclyknem.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoampxcmdlb3pjbWRjbHlrbmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTE0MjMsImV4cCI6MjA4ODk4NzQyM30.0dqKFd06ZnLxo0mOJm_xxYK1a4wdfHNXRgr6awFmdkc',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const MyApp());

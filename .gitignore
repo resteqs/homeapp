@@ -46,3 +46,12 @@ app.*.map.json
 
 # Nowa related
 .nowa/temp
+
+# Environments and Secrets
+.env
+.env.*
+*.key
+*.pem
+*.keystore
+*.jks
+lib/constants/secrets.dart
