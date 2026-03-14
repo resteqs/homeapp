@@ -295,6 +295,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deutsch'**
   String get langGerman;
+
+  /// No description provided for @groceryItemsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items selected'**
+  String groceryItemsSelected(int count);
+
+  /// No description provided for @groceryDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected'**
+  String get groceryDeleteSelected;
+
+  /// No description provided for @groceryMoveToAnotherList.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to another list'**
+  String get groceryMoveToAnotherList;
+
+  /// No description provided for @groceryCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get groceryCancel;
+
+  /// No description provided for @groceryNoOtherListAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No other list available.'**
+  String get groceryNoOtherListAvailable;
+
+  /// No description provided for @grocerySelectDestinationList.
+  ///
+  /// In en, this message translates to:
+  /// **'Select destination list'**
+  String get grocerySelectDestinationList;
+
+  /// No description provided for @groceryDefaultListName.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get groceryDefaultListName;
+
+  /// No description provided for @groceryDeleteListQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete list?'**
+  String get groceryDeleteListQuestion;
+
+  /// No description provided for @groceryDeleteListWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The list \"{listName}\" will be deleted permanently.'**
+  String groceryDeleteListWarning(String listName);
+
+  /// No description provided for @groceryDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get groceryDelete;
+
+  /// No description provided for @groceryDeleteList.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete list'**
+  String get groceryDeleteList;
+
+  /// No description provided for @groceryCouldNotLoadList.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load list.'**
+  String get groceryCouldNotLoadList;
+
+  /// No description provided for @groceryDeleteAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all'**
+  String get groceryDeleteAll;
+
+  /// No description provided for @groceryCategoryProduce.
+  ///
+  /// In en, this message translates to:
+  /// **'Fruits & Vegetables'**
+  String get groceryCategoryProduce;
+
+  /// No description provided for @groceryCategoryDairy.
+  ///
+  /// In en, this message translates to:
+  /// **'Dairy'**
+  String get groceryCategoryDairy;
+
+  /// No description provided for @groceryCategoryBakery.
+  ///
+  /// In en, this message translates to:
+  /// **'Bakery'**
+  String get groceryCategoryBakery;
+
+  /// No description provided for @groceryCategoryDrinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Drinks'**
+  String get groceryCategoryDrinks;
+
+  /// No description provided for @groceryCategorySnacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Snacks & Sweets'**
+  String get groceryCategorySnacks;
+
+  /// No description provided for @groceryCategoryCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Care & Cleaning'**
+  String get groceryCategoryCare;
+
+  /// No description provided for @groceryCategoryMeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Meat & Fish'**
+  String get groceryCategoryMeat;
+
+  /// No description provided for @groceryCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get groceryCategoryOther;
 }
 
 class _AppLocalizationsDelegate

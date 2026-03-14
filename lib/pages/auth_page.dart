@@ -9,6 +9,11 @@ class AuthPage extends StatefulWidget {
   State<AuthPage> createState() => _AuthPageState();
 }
 
+/// Handles user authentication (Login/Signup).
+/// 
+/// Interacts with Supabase Auth to authenticate users and triggers the remote RPC
+/// `ensure_user_household_and_default_lists` upon a successful login or signup
+/// to ensure the backend environment (households, lists) is ready down the line.
 class _AuthPageState extends State<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();

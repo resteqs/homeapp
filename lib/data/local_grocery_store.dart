@@ -3,6 +3,10 @@ import 'package:sqflite/sqflite.dart';
 
 import 'package:homeapp/models/grocery_item.dart';
 
+/// A singleton local database manager using SQLite.
+/// 
+/// This acts as the offline-first cache for grocery lists. All creates, updates, 
+/// and deletes are written to SQLite immediately, then synced in the background.
 class LocalGroceryStore {
   static final LocalGroceryStore _instance = LocalGroceryStore._internal();
   LocalGroceryStore._internal();
@@ -149,6 +153,30 @@ class LocalGroceryStore {
       'local_grocery_items',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  Future<void> updateItemListId(String itemId, String newListId) async {
+    final db = await database;
+    await db.update(
+      'local_grocery_items',
+      {
+        'list_id': newListId,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+        'sync_status': 'pending_upsert',
+        'deleted_at': null,
+      },
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+  }
+
+  Future<void> deleteItemsByListId(String listId) async {
+    final db = await database;
+    await db.delete(
+      'local_grocery_items',
+      where: 'list_id = ?',
+      whereArgs: [listId],
     );
   }
 }

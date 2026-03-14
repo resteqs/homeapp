@@ -1,3 +1,7 @@
+/// Represents a single grocery item within a grocery list.
+///
+/// Handes mapping from SQLite/Supabase to Dart objects and includes
+/// synchronization state tracking through [syncStatus].
 class GroceryItem {
   final String id;
   final String listId;

@@ -111,4 +111,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get langGerman => 'Deutsch';
+
+  @override
+  String groceryItemsSelected(int count) {
+    return '$count items selected';
+  }
+
+  @override
+  String get groceryDeleteSelected => 'Delete selected';
+
+  @override
+  String get groceryMoveToAnotherList => 'Move to another list';
+
+  @override
+  String get groceryCancel => 'Cancel';
+
+  @override
+  String get groceryNoOtherListAvailable => 'No other list available.';
+
+  @override
+  String get grocerySelectDestinationList => 'Select destination list';
+
+  @override
+  String get groceryDefaultListName => 'Shopping list';
+
+  @override
+  String get groceryDeleteListQuestion => 'Delete list?';
+
+  @override
+  String groceryDeleteListWarning(String listName) {
+    return 'The list \"$listName\" will be deleted permanently.';
+  }
+
+  @override
+  String get groceryDelete => 'Delete';
+
+  @override
+  String get groceryDeleteList => 'Delete list';
+
+  @override
+  String get groceryCouldNotLoadList => 'Could not load list.';
+
+  @override
+  String get groceryDeleteAll => 'Delete all';
+
+  @override
+  String get groceryCategoryProduce => 'Fruits & Vegetables';
+
+  @override
+  String get groceryCategoryDairy => 'Dairy';
+
+  @override
+  String get groceryCategoryBakery => 'Bakery';
+
+  @override
+  String get groceryCategoryDrinks => 'Drinks';
+
+  @override
+  String get groceryCategorySnacks => 'Snacks & Sweets';
+
+  @override
+  String get groceryCategoryCare => 'Care & Cleaning';
+
+  @override
+  String get groceryCategoryMeat => 'Meat & Fish';
+
+  @override
+  String get groceryCategoryOther => 'Other';
 }

@@ -43,9 +43,43 @@
     "settingsTitle": "Settings",
     "settingsLogout": "Log out",
     "settingsLoggingOut": "Signing out...",
-    
     "settingsAttributions": "Attributions",
     "settingsLanguage": "Language",
     "langEnglish": "English",
-    "langGerman": "Deutsch"
+    "langGerman": "Deutsch",
+    "groceryItemsSelected": "{count} items selected",
+    "@groceryItemsSelected": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "groceryDeleteSelected": "Delete selected",
+    "groceryMoveToAnotherList": "Move to another list",
+    "groceryCancel": "Cancel",
+    "groceryNoOtherListAvailable": "No other list available.",
+    "grocerySelectDestinationList": "Select destination list",
+    "groceryDefaultListName": "Shopping list",
+    "groceryDeleteListQuestion": "Delete list?",
+    "groceryDeleteListWarning": "The list \"{listName}\" will be deleted permanently.",
+    "@groceryDeleteListWarning": {
+        "placeholders": {
+            "listName": {
+                "type": "String"
+            }
+        }
+    },
+    "groceryDelete": "Delete",
+    "groceryDeleteList": "Delete list",
+    "groceryCouldNotLoadList": "Could not load list.",
+    "groceryDeleteAll": "Delete all",
+    "groceryCategoryProduce": "Fruits & Vegetables",
+    "groceryCategoryDairy": "Dairy",
+    "groceryCategoryBakery": "Bakery",
+    "groceryCategoryDrinks": "Drinks",
+    "groceryCategorySnacks": "Snacks & Sweets",
+    "groceryCategoryCare": "Care & Cleaning",
+    "groceryCategoryMeat": "Meat & Fish",
+    "groceryCategoryOther": "Other"
 }
