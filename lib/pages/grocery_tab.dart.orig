@@ -1,0 +1,394 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class GroceryItem {
+  final String id;
+  final String listId;
+  final String name;
+  final String category;
+  final bool isBought;
+
+  GroceryItem({
+    required this.id,
+    required this.listId,
+    required this.name,
+    required this.category,
+    required this.isBought,
+  });
+
+  factory GroceryItem.fromMap(Map<String, dynamic> map) {
+    return GroceryItem(
+      id: map['id'] as String,
+      listId: map['list_id'] as String,
+      name: map['name'] as String,
+      category: map['category'] as String? ?? 'Other',
+      isBought: map['is_bought'] as bool? ?? false,
+    );
+  }
+}
+
+class GroceryTab extends StatefulWidget {
+  const GroceryTab({super.key});
+
+  @override
+  State<GroceryTab> createState() => _GroceryTabState();
+}
+
+class _GroceryTabState extends State<GroceryTab> {
+  final TextEditingController _textController = TextEditingController();
+  final _supabase = Supabase.instance.client;
+  String? _listId;
+  bool _isLoadingId = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultListId();
+  }
+
+  Future<void> _loadDefaultListId() async {
+    try {
+      final res = await _supabase.from('grocery_lists').select('id').limit(1);
+      if (mounted) {
+        setState(() {
+          if (res.isNotEmpty) {
+            _listId = res.first['id'] as String;
+          } else {
+            _listId = 'empty';
+          }
+          _isLoadingId = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _listId = 'error';
+          _isLoadingId = false;
+        });
+      }
+    }
+  }
+
+  Future<String> _determineCategory(String itemName) async {
+    final normalized = itemName.toLowerCase().trim();
+
+    // 1. Check household custom items
+    final customRes = await _supabase
+        .from('household_custom_items')
+        .select('category')
+        .ilike('name', normalized)
+        .maybeSingle();
+
+    if (customRes != null) {
+      return customRes['category'] as String;
+    }
+
+    // 2. Check global items
+    final globalRes = await _supabase
+        .from('global_items')
+        .select('category')
+        .ilike('name', normalized)
+        .maybeSingle();
+
+    if (globalRes != null) {
+      return globalRes['category'] as String;
+    }
+
+    return 'Other';
+  }
+
+  Future<void> _addItem() async {
+    if (_listId == null) return;
+
+    final name = _textController.text.trim();
+    if (name.isEmpty) return;
+
+    _textController.clear();
+
+    final category = await _determineCategory(name);
+
+    await _supabase.from('grocery_list_items').insert({
+      'list_id': _listId,
+      'name': name,
+      'category': category,
+      'is_bought': false,
+    });
+  }
+
+  Future<void> _toggleItem(GroceryItem item) async {
+    await _supabase
+        .from('grocery_list_items')
+        .update({'is_bought': !item.isBought}).eq('id', item.id);
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  // Group items by category.
+  Map<String, List<GroceryItem>> _groupItems(List<GroceryItem> items) {
+    final map = <String, List<GroceryItem>>{};
+    for (var item in items) {
+      map.putIfAbsent(item.category, () => []).add(item);
+    }
+    return map;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoadingId) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_listId == 'empty') {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('No grocery list found.'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _supabase.auth.signOut(),
+              child: const Text('Sign out and Create New Account'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_listId == 'error') {
+      return const Center(child: Text('Error loading grocery list.'));
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _supabase
+                .from('grocery_list_items')
+                .stream(primaryKey: ['id'])
+                .eq('list_id', _listId!)
+                .order('created_at', ascending: false),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final allItems = (snapshot.data ?? [])
+                  .map((map) => GroceryItem.fromMap(map))
+                  .toList();
+
+              final toBuyItems = allItems.where((i) => !i.isBought).toList();
+              final boughtItems = allItems.where((i) => i.isBought).toList();
+
+              final groupedToBuy = _groupItems(toBuyItems);
+
+              return CustomScrollView(
+                slivers: [
+                  // --- To Buy Grouped by Category ---
+                  if (groupedToBuy.isEmpty && boughtItems.isEmpty)
+                    SliverFillRemaining(
+                      child: Center(
+                        child: Text(
+                          'Your list is empty',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    ),
+
+                  ...groupedToBuy.entries.map((entry) {
+                    final category = entry.key;
+                    final items = entry.value;
+
+                    return SliverMainAxisGroup(
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                          sliver: SliverToBoxAdapter(
+                            child: Text(
+                              category,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                            ),
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final item = items[index];
+                                return Card(
+                                  elevation: 0,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  margin: const EdgeInsets.only(bottom: 8.0),
+                                  child: ListTile(
+                                    title: Text(
+                                      item.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    leading: Checkbox(
+                                      value: item.isBought,
+                                      onChanged: (_) => _toggleItem(item),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    onTap: () => _toggleItem(item),
+                                  ),
+                                );
+                              },
+                              childCount: items.length,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+
+                  // --- Recent / Bought Section ---
+                  if (boughtItems.isNotEmpty) ...[
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 32, 16, 8),
+                      sliver: SliverToBoxAdapter(
+                        child: Text(
+                          'Recent',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = boughtItems[index];
+                            return Card(
+                              elevation: 0,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(0.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant,
+                                ),
+                              ),
+                              margin: const EdgeInsets.only(bottom: 8.0),
+                              child: ListTile(
+                                title: Text(
+                                  item.name,
+                                  style: TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                                ),
+                                subtitle: Text(item.category,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant
+                                          .withOpacity(0.7),
+                                    )),
+                                leading: Checkbox(
+                                  value: item.isBought,
+                                  onChanged: (_) => _toggleItem(item),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                onTap: () => _toggleItem(item),
+                              ),
+                            );
+                          },
+                          childCount: boughtItems.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                  // add bottom padding so FAB doesn't cover last item
+                  const SliverPadding(padding: EdgeInsets.only(bottom: 30)),
+                ],
+              );
+            },
+          ),
+        ),
+
+        // Bottom Input Bar
+        SafeArea(
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  offset: const Offset(0, -4),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: 'Add an item...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    onSubmitted: (_) => _addItem(),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                FloatingActionButton(
+                  onPressed: _addItem,
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.add),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
