@@ -89,12 +89,6 @@ class GroceryItemTile extends StatelessWidget {
               color: isBought ? Theme.of(context).colorScheme.outline : null,
             ),
           ),
-          subtitle: Text(
-            CategoryUtils.localizedCategoryName(context, categoryKey),
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(

@@ -4,8 +4,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:homeapp/models/grocery_item.dart';
 
 /// A singleton local database manager using SQLite.
-/// 
-/// This acts as the offline-first cache for grocery lists. All creates, updates, 
+///
+/// This acts as the offline-first cache for grocery lists. All creates, updates,
 /// and deletes are written to SQLite immediately, then synced in the background.
 class LocalGroceryStore {
   static final LocalGroceryStore _instance = LocalGroceryStore._internal();
@@ -53,15 +53,33 @@ class LocalGroceryStore {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          await db.execute(
-              'ALTER TABLE local_grocery_items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1');
+          if (!await _columnExists(db, 'local_grocery_items', 'quantity')) {
+            await db.execute(
+                'ALTER TABLE local_grocery_items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1');
+          }
         }
         if (oldVersion < 3) {
-          await db.execute(
-              'ALTER TABLE local_grocery_items ADD COLUMN unit TEXT');
+          if (!await _columnExists(db, 'local_grocery_items', 'unit')) {
+            await db.execute(
+                'ALTER TABLE local_grocery_items ADD COLUMN unit TEXT');
+          }
         }
       },
     );
+  }
+
+  Future<bool> _columnExists(
+    DatabaseExecutor db,
+    String tableName,
+    String columnName,
+  ) async {
+    final columns = await db.rawQuery('PRAGMA table_info($tableName)');
+    for (final column in columns) {
+      if (column['name'] == columnName) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<void> setMeta(String key, String value) async {
