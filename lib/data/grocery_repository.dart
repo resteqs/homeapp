@@ -183,6 +183,7 @@ class GroceryRepository extends ChangeNotifier {
       deletedAt: null,
       syncStatus: 'pending_upsert',
       quantity: 1,
+      unit: null,
     );
 
     await _localStore.upsertItem(item);
@@ -233,7 +234,8 @@ class GroceryRepository extends ChangeNotifier {
   Future<void> updateItemDetails(
     GroceryItem item,
     String newName,
-    int newQuantity, {
+    int newQuantity,
+    String? newUnit, {
     String locale = 'en',
   }) async {
     final normalizedName = newName.trim();
@@ -243,6 +245,7 @@ class GroceryRepository extends ChangeNotifier {
       name: normalizedName,
       category: category,
       quantity: newQuantity,
+      unit: newUnit,
       updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending_upsert',
     );
@@ -334,6 +337,7 @@ class GroceryRepository extends ChangeNotifier {
             'deleted_at': null,
             'updated_by': _supabase.auth.currentUser?.id,
             'quantity': item.quantity,
+            'unit': item.unit,
           },
           onConflict: 'id',
         );
@@ -352,7 +356,7 @@ class GroceryRepository extends ChangeNotifier {
 
       final remote = await _supabase
           .from('grocery_list_items')
-          .select('id, list_id, name, category, is_bought, quantity, updated_at, deleted_at')
+          .select('id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
           .eq('list_id', id)
           .isFilter('deleted_at', null)
           .order('updated_at', ascending: false);

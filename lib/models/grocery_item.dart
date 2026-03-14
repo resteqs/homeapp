@@ -12,6 +12,7 @@ class GroceryItem {
   final DateTime? deletedAt;
   final String syncStatus;
   final int quantity;
+  final String? unit;
 
   const GroceryItem({
     required this.id,
@@ -23,6 +24,7 @@ class GroceryItem {
     required this.deletedAt,
     required this.syncStatus,
     required this.quantity,
+    this.unit,
   });
 
   factory GroceryItem.fromMap(Map<String, dynamic> map) {
@@ -37,6 +39,7 @@ class GroceryItem {
       deletedAt: DateTime.tryParse(map['deleted_at']?.toString() ?? ''),
       syncStatus: map['sync_status']?.toString() ?? 'synced',
       quantity: map['quantity'] != null ? int.tryParse(map['quantity'].toString()) ?? 1 : 1,
+      unit: map['unit']?.toString(),
     );
   }
 
@@ -51,6 +54,7 @@ class GroceryItem {
       'deleted_at': deletedAt?.toUtc().toIso8601String(),
       'sync_status': syncStatus,
       'quantity': quantity,
+      'unit': unit,
     };
   }
 
@@ -64,6 +68,7 @@ class GroceryItem {
     DateTime? deletedAt,
     String? syncStatus,
     int? quantity,
+    String? unit,
   }) {
     return GroceryItem(
       id: id ?? this.id,
@@ -75,6 +80,7 @@ class GroceryItem {
       deletedAt: deletedAt ?? this.deletedAt,
       syncStatus: syncStatus ?? this.syncStatus,
       quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
     );
   }
 }

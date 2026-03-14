@@ -237,11 +237,12 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           child: GroceryEditSheet(
             item: item,
-            onSave: (editedItem, newName, quantity) async {
+            onSave: (editedItem, newName, quantity, unit) async {
               await widget.repository.updateItemDetails(
                 editedItem,
                 newName,
                 quantity,
+                unit,
                 locale: _locale,
               );
               if (mounted) {

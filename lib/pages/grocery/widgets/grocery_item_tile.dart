@@ -105,7 +105,7 @@ class GroceryItemTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${item.quantity}',
+                  '${item.quantity}${item.unit != null && item.unit!.trim().isNotEmpty ? ' ${item.unit}' : ''}',
                   style: TextStyle(
                     color: isBought
                         ? Theme.of(context).colorScheme.outline

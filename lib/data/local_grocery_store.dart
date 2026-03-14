@@ -25,7 +25,7 @@ class LocalGroceryStore {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'homeapp_local.db'),
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         // Local-first cache for grocery items. sync_status tracks pending writes
         // so UI stays responsive while network sync runs in the background.
@@ -39,7 +39,8 @@ class LocalGroceryStore {
             updated_at TEXT NOT NULL,
             deleted_at TEXT,
             sync_status TEXT NOT NULL,
-            quantity INTEGER NOT NULL DEFAULT 1
+            quantity INTEGER NOT NULL DEFAULT 1,
+            unit TEXT
           )
         ''');
 
@@ -54,6 +55,10 @@ class LocalGroceryStore {
         if (oldVersion < 2) {
           await db.execute(
               'ALTER TABLE local_grocery_items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+              'ALTER TABLE local_grocery_items ADD COLUMN unit TEXT');
         }
       },
     );

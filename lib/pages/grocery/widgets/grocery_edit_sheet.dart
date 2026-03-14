@@ -4,7 +4,7 @@ import 'package:homeapp/models/grocery_item.dart';
 
 class GroceryEditSheet extends StatefulWidget {
   final GroceryItem item;
-  final Future<void> Function(GroceryItem item, String newName, int quantity)
+  final Future<void> Function(GroceryItem item, String newName, int quantity, String? unit)
       onSave;
   final Future<void> Function(GroceryItem item) onDelete;
 
@@ -21,10 +21,18 @@ class GroceryEditSheet extends StatefulWidget {
 
 class _GroceryEditSheetState extends State<GroceryEditSheet> {
   late TextEditingController _nameController;
+  late TextEditingController _quantityController;
+  late TextEditingController _unitController;
   late int _quantity;
 
+  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final FocusNode _nameNode = FocusNode();
+  final FocusNode _quantityNode = FocusNode();
+  final FocusNode _unitNode = FocusNode();
+  final FocusNode _noteNode = FocusNode();
+  final FocusNode _priceNode = FocusNode();
+
   // Mock fields
-  final TextEditingController _unitController = TextEditingController();
   final TextEditingController _noteController = TextEditingController(
       text: "👆 Tippe auf das Element, um es zu bearbeiten");
   final TextEditingController _priceController =
@@ -39,21 +47,48 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
     _quantity = widget.item.quantity;
+    _quantityController = TextEditingController(
+        text: _quantity > 0 ? _quantity.toString() : '');
+    _unitController = TextEditingController(text: widget.item.unit ?? '');
+
+    void expandSheet() {
+      if (_sheetController.isAttached) {
+        _sheetController.animateTo(
+          0.95,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    }
+
+    _nameNode.addListener(() { if (_nameNode.hasFocus) expandSheet(); });
+    _quantityNode.addListener(() { if (_quantityNode.hasFocus) expandSheet(); });
+    _unitNode.addListener(() { if (_unitNode.hasFocus) expandSheet(); });
+    _noteNode.addListener(() { if (_noteNode.hasFocus) expandSheet(); });
+    _priceNode.addListener(() { if (_priceNode.hasFocus) expandSheet(); });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _quantityController.dispose();
     _unitController.dispose();
     _noteController.dispose();
     _priceController.dispose();
+    _sheetController.dispose();
+    _nameNode.dispose();
+    _quantityNode.dispose();
+    _unitNode.dispose();
+    _noteNode.dispose();
+    _priceNode.dispose();
     super.dispose();
   }
 
   void _save() {
     final newName = _nameController.text.trim();
     if (newName.isEmpty) return;
-    widget.onSave(widget.item, newName, _quantity).then((_) {
+    final unitText = _unitController.text.trim();
+    widget.onSave(widget.item, newName, _quantity, unitText.isEmpty ? null : unitText).then((_) {
       if (mounted) Navigator.of(context).pop();
     });
   }
@@ -68,6 +103,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     const secondaryTextColor = Colors.black54;
 
     return DraggableScrollableSheet(
+      controller: _sheetController,
       initialChildSize: 0.30,
       minChildSize: 0.30,
       maxChildSize: 0.95,
@@ -75,15 +111,17 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
       builder: (context, scrollController) {
         return Container(
           color: bgColor,
-          padding: EdgeInsets.only(
+          padding: const EdgeInsets.only(
             left: 16,
             right: 16,
             top: 12,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
           ),
           child: SafeArea(
             child: SingleChildScrollView(
               controller: scrollController,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -127,6 +165,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         Expanded(
                           child: TextField(
                             controller: _nameController,
+                            focusNode: _nameNode,
                             style: const TextStyle(
                                 color: textColor,
                                 fontSize: 20,
@@ -157,9 +196,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextField(
-                            controller: TextEditingController(
-                                text:
-                                    _quantity > 0 ? _quantity.toString() : ''),
+                            controller: _quantityController,
+                            focusNode: _quantityNode,
                             style: const TextStyle(color: textColor),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
@@ -168,9 +206,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                             ),
                             keyboardType: TextInputType.number,
                             onChanged: (val) {
-                              setState(() {
-                                _quantity = int.tryParse(val) ?? 0;
-                              });
+                              _quantity = int.tryParse(val) ?? 0;
                             },
                           ),
                         ),
@@ -185,6 +221,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextField(
                             controller: _unitController,
+                            focusNode: _unitNode,
                             style: const TextStyle(color: textColor),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
@@ -203,7 +240,12 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         child: IconButton(
                           icon: const Icon(Icons.remove, color: textColor),
                           onPressed: _quantity > 1
-                              ? () => setState(() => _quantity--)
+                              ? () {
+                                  setState(() {
+                                    _quantity--;
+                                    _quantityController.text = _quantity.toString();
+                                  });
+                                }
                               : null,
                         ),
                       ),
@@ -215,7 +257,12 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.add, color: Colors.black),
-                          onPressed: () => setState(() => _quantity++),
+                          onPressed: () {
+                            setState(() {
+                              _quantity++;
+                              _quantityController.text = _quantity.toString();
+                            });
+                          },
                         ),
                       ),
                     ],
@@ -256,6 +303,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         ),
                         TextField(
                           controller: _noteController,
+                          focusNode: _noteNode,
                           style:
                               const TextStyle(color: textColor, fontSize: 14),
                           decoration: const InputDecoration(
@@ -307,6 +355,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                                       color: secondaryTextColor, fontSize: 12)),
                               TextField(
                                 controller: _priceController,
+                                focusNode: _priceNode,
                                 style: const TextStyle(
                                     color: textColor,
                                     fontSize: 16,
