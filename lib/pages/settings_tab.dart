@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:homeapp/l10n/app_localizations.dart';
+import 'package:homeapp/globals/app_state.dart';
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
 
@@ -21,7 +22,7 @@ class _SettingsTabState extends State<SettingsTab> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not sign out: $error')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.authSignoutError(error.toString()))),
       );
     } finally {
       if (mounted) {
@@ -38,14 +39,31 @@ class _SettingsTabState extends State<SettingsTab> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Settings',
+            AppLocalizations.of(context)!.settingsTitle,
             style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(AppLocalizations.of(context)!.settingsLanguage, style: const TextStyle(fontSize: 16)),
+              SegmentedButton<String>(
+                segments: [
+                  ButtonSegment(value: 'en', label: Text(AppLocalizations.of(context)!.langEnglish)),
+                  ButtonSegment(value: 'de', label: Text(AppLocalizations.of(context)!.langGerman)),
+                ],
+                selected: {AppState.of(context).locale.languageCode},
+                onSelectionChanged: (Set<String> newSelection) {
+                  AppState.of(context, listen: false).setLocale(Locale(newSelection.first));
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _isSigningOut ? null : _signOut,
             icon: const Icon(Icons.logout),
-            label: Text(_isSigningOut ? 'Signing out...' : 'Log out'),
+            label: Text(_isSigningOut ? AppLocalizations.of(context)!.settingsLoggingOut : AppLocalizations.of(context)!.settingsLogout),
           ),
         ],
       ),

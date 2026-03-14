@@ -1,0 +1,49 @@
+{
+    "@@locale": "en",
+    "appTitle": "Home",
+    "navHome": "Home",
+    "navGrocery": "Grocery",
+    "navChore": "Chore",
+    "navFinance": "Finance",
+    "navSettings": "Settings",
+    "authLogin": "Login",
+    "authRegister": "Register",
+    "authEmail": "Email",
+    "authPassword": "Password",
+    "authUsername": "Username",
+    "authPleaseWait": "Please wait...",
+    "authSignupPrompt": "Don't have an account? Register",
+    "authLoginPrompt": "Already have an account? Login",
+    "authSignupSuccess": "Registration successful! Please check your email.",
+    "authSignoutError": "Could not sign out: {error}",
+    "@authSignoutError": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "authUnexpectedError": "Unexpected error occurred: {error}",
+    "@authUnexpectedError": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "groceryMyLists": "My lists",
+    "groceryNoLists": "No lists available.",
+    "groceryAddItem": "Add an item...",
+    "groceryAdd": "ADD",
+    "groceryEditItem": "Edit Item",
+    "groceryQuantity": "Quantity",
+    "grocerySaveChanges": "Save Changes",
+    "groceryEmptyList": "Your list is empty",
+    "groceryBoughtItems": "Bought Items",
+    "settingsTitle": "Settings",
+    "settingsLogout": "Log out",
+    "settingsLoggingOut": "Signing out...",
+    "settingsLanguage": "Language",
+    "langEnglish": "English",
+    "langGerman": "Deutsch"
+}

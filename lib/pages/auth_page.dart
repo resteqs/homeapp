@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:homeapp/l10n/app_localizations.dart';
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -55,8 +55,8 @@ class _AuthPageState extends State<AuthPage> {
         if (mounted) {
           if (res.session == null) {
             // Confirm-email projects return no session until verification.
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-               content: Text('Registration successful! Please check your email to verify your account.'),
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+               content: Text(AppLocalizations.of(context)!.authSignupSuccess),
             ));
             setState(() => _isLogin = true);
           } else {
@@ -71,7 +71,7 @@ class _AuthPageState extends State<AuthPage> {
       ));
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Unexpected error occurred: $error'),
+        content: Text(AppLocalizations.of(context)!.authUnexpectedError(error.toString())),
         backgroundColor: Theme.of(context).colorScheme.error,
       ));
     } finally {
@@ -90,7 +90,7 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isLogin ? 'Login' : 'Register')),
+      appBar: AppBar(title: Text(_isLogin ? AppLocalizations.of(context)!.authLogin : AppLocalizations.of(context)!.authRegister)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -101,26 +101,26 @@ class _AuthPageState extends State<AuthPage> {
               if (!_isLogin)
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(labelText: 'Username'),
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.authUsername),
                 ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.authEmail),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.authPassword),
                 obscureText: true,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 child: Text(_isLoading
-                    ? 'Please wait...'
-                    : (_isLogin ? 'Login' : 'Register')),
+                    ? AppLocalizations.of(context)!.authPleaseWait
+                    : (_isLogin ? AppLocalizations.of(context)!.authLogin : AppLocalizations.of(context)!.authRegister)),
               ),
               TextButton(
                 onPressed: () {
@@ -129,8 +129,8 @@ class _AuthPageState extends State<AuthPage> {
                   });
                 },
                 child: Text(_isLogin
-                    ? 'Don\'t have an account? Register'
-                    : 'Already have an account? Login'),
+                    ? AppLocalizations.of(context)!.authSignupPrompt
+                    : AppLocalizations.of(context)!.authLoginPrompt),
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:nowa_runtime/nowa_runtime.dart';
 import 'home_tab.dart';
 import 'grocery_tab.dart'; // Import the new tab
 import 'settings_tab.dart';
+import 'package:homeapp/l10n/app_localizations.dart';
 
 @NowaGenerated()
 class HomePage extends StatefulWidget {
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home Page')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.appTitle)),
       body: SafeArea(
         child: IndexedStack(
           index: _currentIndex,
@@ -39,26 +40,26 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: AppLocalizations.of(context)!.navHome,
           ),
           NavigationDestination(
-            icon: Icon(Icons.local_grocery_store),
-            label: 'Grocery',
+            icon: const Icon(Icons.local_grocery_store),
+            label: AppLocalizations.of(context)!.navGrocery,
           ),
           NavigationDestination(
-            icon: Icon(Icons.cleaning_services),
-            label: 'Chore',
+            icon: const Icon(Icons.cleaning_services),
+            label: AppLocalizations.of(context)!.navChore,
           ),
           NavigationDestination(
-            icon: Icon(Icons.attach_money),
-            label: 'Finance',
+            icon: const Icon(Icons.attach_money),
+            label: AppLocalizations.of(context)!.navFinance,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: const Icon(Icons.settings),
+            label: AppLocalizations.of(context)!.navSettings,
           ),
         ],
       ),

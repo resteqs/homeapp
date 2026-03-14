@@ -1,4 +1,3 @@
-import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:homeapp/data/grocery_repository.dart';
 import 'package:homeapp/data/local_grocery_store.dart';
 import 'package:homeapp/models/grocery_item.dart';
+import 'package:homeapp/l10n/app_localizations.dart';
 
 class GroceryTab extends StatefulWidget {
   const GroceryTab({super.key});
@@ -52,7 +52,7 @@ class _GroceryTabState extends State<GroceryTab> {
 
   /// Returns the device's primary language code, e.g. 'en', 'de'.
   String get _locale {
-    final tag = PlatformDispatcher.instance.locale.languageCode;
+    final tag = Localizations.localeOf(context).languageCode;
     return tag.isNotEmpty ? tag : 'en';
   }
 
@@ -108,7 +108,7 @@ class _GroceryTabState extends State<GroceryTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Edit Item', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(AppLocalizations.of(context)!.groceryEditItem, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 24),
                   TextField(
                     controller: nameController,
@@ -124,7 +124,7 @@ class _GroceryTabState extends State<GroceryTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Quantity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                      Text(AppLocalizations.of(context)!.groceryQuantity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       Container(
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -166,7 +166,7 @@ class _GroceryTabState extends State<GroceryTab> {
                           _fetchLists();
                         }
                       },
-                      child: const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(AppLocalizations.of(context)!.grocerySaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -186,7 +186,7 @@ class _GroceryTabState extends State<GroceryTab> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My lists', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text(AppLocalizations.of(context)!.groceryMyLists, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
         centerTitle: false,
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -195,7 +195,7 @@ class _GroceryTabState extends State<GroceryTab> {
         ],
       ),
       body: _lists.isEmpty 
-          ? const Center(child: Text('No lists available.'))
+          ? Center(child: Text(AppLocalizations.of(context)!.groceryNoLists))
           : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               itemCount: _lists.length,
@@ -270,7 +270,7 @@ class _GroceryTabState extends State<GroceryTab> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        label: const Text('ADD', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        label: Text(AppLocalizations.of(context)!.groceryAdd, style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         icon: const Icon(Icons.add),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
@@ -325,7 +325,7 @@ class _GroceryTabState extends State<GroceryTab> {
                     if (groupedToBuy.isEmpty && boughtItems.isEmpty)
                       SliverFillRemaining(
                         child: Center(
-                          child: Text('Your list is empty', style: Theme.of(context).textTheme.bodyLarge),
+                          child: Text(AppLocalizations.of(context)!.groceryEmptyList, style: Theme.of(context).textTheme.bodyLarge),
                         ),
                       ),
                     ...groupedToBuy.entries.map((entry) {
@@ -395,7 +395,7 @@ class _GroceryTabState extends State<GroceryTab> {
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                         sliver: SliverToBoxAdapter(
-                          child: Text('Bought Items', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.outline)),
+                          child: Text(AppLocalizations.of(context)!.groceryBoughtItems, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.outline)),
                         ),
                       ),
                       SliverPadding(
@@ -459,8 +459,8 @@ class _GroceryTabState extends State<GroceryTab> {
                           ),
                           child: TextField(
                             controller: _textController,
-                            decoration: const InputDecoration(
-                              hintText: 'Add an item...',
+                            decoration: InputDecoration(
+                              hintText: AppLocalizations.of(context)!.groceryAddItem,
                               border: InputBorder.none,
                               prefixIcon: Icon(Icons.add, color: Colors.grey),
                               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
