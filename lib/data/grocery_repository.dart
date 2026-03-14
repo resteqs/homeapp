@@ -23,6 +23,8 @@ class GroceryRepository extends ChangeNotifier {
   final SupabaseClient _supabase;
   final LocalGroceryStore _localStore;
   final Uuid _uuid = const Uuid();
+  final Map<String, String> _categoryCache = <String, String>{};
+  final Map<String, Future<String>> _categoryLookups = <String, Future<String>>{};
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
@@ -32,8 +34,12 @@ class GroceryRepository extends ChangeNotifier {
   // If sync is requested during an active run, trigger one more pass afterward
   // so no local mutations are skipped.
   bool _syncQueued = false;
+  bool _queuedRemotePull = false;
   String? _lastError;
   String? _listId;
+  DateTime? _lastRemotePullAt;
+
+  static const Duration _remotePullCooldown = Duration(seconds: 15);
 
   List<GroceryItem> get items => _items;
   bool get isLoading => _isLoading;
@@ -58,14 +64,14 @@ class GroceryRepository extends ChangeNotifier {
       await _localStore.setMeta('active_grocery_list_id', resolvedListId);
       // Show cached local data immediately, then reconcile with server.
       await refreshFromLocal();
-      await sync();
+      unawaited(sync(forceRemotePull: true));
 
       _connectivitySub ??=
           Connectivity().onConnectivityChanged.listen((results) {
         final hasConnection =
             results.any((result) => result != ConnectivityResult.none);
         if (hasConnection) {
-          unawaited(sync());
+          unawaited(sync(forceRemotePull: true));
         }
       });
     } catch (error) {
@@ -91,6 +97,88 @@ class GroceryRepository extends ChangeNotifier {
     }
     _items = await _localStore.getItems(id);
     notifyListeners();
+  }
+
+  void _setItems(List<GroceryItem> items) {
+    items.sort((left, right) => right.updatedAt.compareTo(left.updatedAt));
+    _items = List<GroceryItem>.unmodifiable(items);
+  }
+
+  void _upsertLocalItemInMemory(GroceryItem item) {
+    final nextItems = _items.where((existing) => existing.id != item.id).toList();
+    if (item.deletedAt == null && item.listId == _listId) {
+      nextItems.add(item);
+    }
+    _setItems(nextItems);
+  }
+
+  void _removeLocalItemFromMemory(String itemId) {
+    if (_items.every((item) => item.id != itemId)) {
+      return;
+    }
+    _setItems(_items.where((item) => item.id != itemId).toList());
+  }
+
+  String _normalizedCategoryLookupKey(String itemName, String locale) {
+    return '${locale.toLowerCase()}::${itemName.trim().toLowerCase()}';
+  }
+
+  Future<String> _lookupCategoryCached(String itemName, {required String locale}) {
+    final key = _normalizedCategoryLookupKey(itemName, locale);
+    final cached = _categoryCache[key];
+    if (cached != null) {
+      return Future<String>.value(cached);
+    }
+
+    final inFlight = _categoryLookups[key];
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final lookup = lookupCategory(itemName, locale: locale).then((resolved) {
+      _categoryCache[key] = resolved;
+      _categoryLookups.remove(key);
+      return resolved;
+    }, onError: (Object error, StackTrace stackTrace) {
+      _categoryLookups.remove(key);
+      throw error;
+    });
+
+    _categoryLookups[key] = lookup;
+    return lookup;
+  }
+
+  Future<void> _resolveCategoryInBackground(
+    GroceryItem item,
+    String name, {
+    required String locale,
+  }) async {
+    try {
+      final resolvedCategory = await _lookupCategoryCached(name, locale: locale);
+      if (resolvedCategory == item.category) {
+        return;
+      }
+
+      final updated = item.copyWith(
+        category: resolvedCategory,
+        updatedAt: DateTime.now().toUtc(),
+        syncStatus: 'pending_upsert',
+      );
+      await _localStore.upsertItem(updated);
+      _upsertLocalItemInMemory(updated);
+      notifyListeners();
+      unawaited(sync());
+    } catch (_) {
+      // Keep the fallback category when remote lookup is unavailable.
+    }
+  }
+
+  bool _shouldPullRemote(bool forceRemotePull) {
+    if (forceRemotePull || _lastRemotePullAt == null) {
+      return true;
+    }
+    return DateTime.now().toUtc().difference(_lastRemotePullAt!) >=
+        _remotePullCooldown;
   }
 
   /// Looks up a category name for [itemName] using [locale] (e.g. 'en', 'de').
@@ -168,8 +256,7 @@ class GroceryRepository extends ChangeNotifier {
     final name = rawName.trim();
     if (name.isEmpty) return;
 
-    // Resolve category before writing (best-effort; falls back to 'Other').
-    final category = await lookupCategory(name, locale: locale);
+    final category = _fallbackCategoryFromItemName(name, locale: locale);
 
     // Local-first write: create immediately in SQLite, then sync in background.
     final now = DateTime.now().toUtc();
@@ -187,7 +274,9 @@ class GroceryRepository extends ChangeNotifier {
     );
 
     await _localStore.upsertItem(item);
-    await refreshFromLocal();
+    _upsertLocalItemInMemory(item);
+    notifyListeners();
+    unawaited(_resolveCategoryInBackground(item, name, locale: locale));
     unawaited(sync());
   }
 
@@ -200,7 +289,8 @@ class GroceryRepository extends ChangeNotifier {
     );
 
     await _localStore.upsertItem(updated);
-    await refreshFromLocal();
+    _upsertLocalItemInMemory(updated);
+    notifyListeners();
     unawaited(sync());
   }
 
@@ -214,7 +304,8 @@ class GroceryRepository extends ChangeNotifier {
     );
 
     await _localStore.upsertItem(updated);
-    await refreshFromLocal();
+    _removeLocalItemFromMemory(item.id);
+    notifyListeners();
     unawaited(sync());
   }
 
@@ -227,7 +318,9 @@ class GroceryRepository extends ChangeNotifier {
     )).toList();
 
     await _localStore.upsertItems(updatedItems);
-    await refreshFromLocal();
+    final deletedIds = updatedItems.map((item) => item.id).toSet();
+    _setItems(_items.where((item) => !deletedIds.contains(item.id)).toList());
+    notifyListeners();
     unawaited(sync());
   }
 
@@ -239,7 +332,7 @@ class GroceryRepository extends ChangeNotifier {
     String locale = 'en',
   }) async {
     final normalizedName = newName.trim();
-    final category = await lookupCategory(normalizedName, locale: locale);
+    final category = _fallbackCategoryFromItemName(normalizedName, locale: locale);
 
     final updated = item.copyWith(
       name: normalizedName,
@@ -251,7 +344,9 @@ class GroceryRepository extends ChangeNotifier {
     );
 
     await _localStore.upsertItem(updated);
-    await refreshFromLocal();
+    _upsertLocalItemInMemory(updated);
+    notifyListeners();
+    unawaited(_resolveCategoryInBackground(updated, normalizedName, locale: locale));
     unawaited(sync());
   }
 
@@ -276,7 +371,7 @@ class GroceryRepository extends ChangeNotifier {
     _listId = id;
     await _localStore.setMeta('active_grocery_list_id', id);
     await refreshFromLocal();
-    unawaited(sync());
+    unawaited(sync(forceRemotePull: true));
   }
 
   Future<void> moveItemsToList(List<GroceryItem> items, String targetListId) async {
@@ -294,7 +389,9 @@ class GroceryRepository extends ChangeNotifier {
         .toList();
 
     await _localStore.upsertItems(movedItems);
-    await refreshFromLocal();
+    final movedIds = movedItems.map((item) => item.id).toSet();
+    _setItems(_items.where((item) => !movedIds.contains(item.id)).toList());
+    notifyListeners();
     unawaited(sync());
   }
 
@@ -305,19 +402,22 @@ class GroceryRepository extends ChangeNotifier {
     if (_listId == listId) {
       _listId = null;
       await _localStore.setMeta('active_grocery_list_id', '');
+      _items = const [];
     }
 
-    await refreshFromLocal();
     notifyListeners();
   }
 
-  Future<void> sync() async {
+  Future<void> sync({bool forceRemotePull = false}) async {
     final id = _listId;
     if (id == null) return;
     if (_isSyncing) {
       _syncQueued = true;
+      _queuedRemotePull = _queuedRemotePull || forceRemotePull;
       return;
     }
+
+    final shouldPullRemote = _shouldPullRemote(forceRemotePull);
 
     _isSyncing = true;
     _lastError = null;
@@ -325,48 +425,61 @@ class GroceryRepository extends ChangeNotifier {
 
     try {
       final pendingUpserts = await _localStore.getPendingUpserts(id);
-      for (final item in pendingUpserts) {
+      if (pendingUpserts.isNotEmpty) {
         await _supabase.from('grocery_list_items').upsert(
-          {
-            'id': item.id,
-            'list_id': item.listId,
-            'name': item.name,
-            'category': item.category,
-            'is_bought': item.isBought,
-            'updated_at': item.updatedAt.toIso8601String(),
-            'deleted_at': null,
-            'updated_by': _supabase.auth.currentUser?.id,
-            'quantity': item.quantity,
-            'unit': item.unit,
-          },
+          pendingUpserts
+              .map(
+                (item) => {
+                  'id': item.id,
+                  'list_id': item.listId,
+                  'name': item.name,
+                  'category': item.category,
+                  'is_bought': item.isBought,
+                  'updated_at': item.updatedAt.toIso8601String(),
+                  'deleted_at': null,
+                  'updated_by': _supabase.auth.currentUser?.id,
+                  'quantity': item.quantity,
+                  'unit': item.unit,
+                },
+              )
+              .toList(growable: false),
           onConflict: 'id',
         );
-        await _localStore.markUpsertSynced(item.id);
+        await _localStore.markUpsertsSynced(
+          pendingUpserts.map((item) => item.id).toList(growable: false),
+        );
       }
 
       final pendingDeletes = await _localStore.getPendingDeletes(id);
-      for (final item in pendingDeletes) {
-        // Hard delete in remote DB to satisfy strict deletion semantics.
+      if (pendingDeletes.isNotEmpty) {
+        final deleteIds = pendingDeletes.map((item) => item.id).toList(growable: false);
         await _supabase
             .from('grocery_list_items')
             .delete()
-            .eq('id', item.id);
-        await _localStore.deleteItemById(item.id);
+            .inFilter('id', deleteIds);
+        await _localStore.deleteItemsByIds(deleteIds);
       }
 
-      final remote = await _supabase
-          .from('grocery_list_items')
-          .select('id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
-          .eq('list_id', id)
-          .isFilter('deleted_at', null)
-          .order('updated_at', ascending: false);
+      if (shouldPullRemote) {
+        final remote = await _supabase
+            .from('grocery_list_items')
+            .select('id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
+            .eq('list_id', id)
+            .isFilter('deleted_at', null)
+            .order('updated_at', ascending: false);
 
-      final remoteItems = (remote as List<dynamic>)
-          .map((row) => GroceryItem.fromMap({...row as Map<String, dynamic>, 'sync_status': 'synced'}))
-          .toList();
+        final remoteItems = (remote as List<dynamic>)
+            .map((row) => GroceryItem.fromMap({...row as Map<String, dynamic>, 'sync_status': 'synced'}))
+            .toList(growable: false);
 
-      await _localStore.upsertItems(remoteItems);
-      await refreshFromLocal();
+        await _localStore.mergeRemoteItems(id, remoteItems);
+        _lastRemotePullAt = DateTime.now().toUtc();
+        await refreshFromLocal();
+      } else {
+        final refreshedItems = await _localStore.getItems(id);
+        _setItems(refreshedItems);
+        notifyListeners();
+      }
     } catch (error) {
       _lastError = error.toString();
     } finally {
@@ -375,7 +488,9 @@ class GroceryRepository extends ChangeNotifier {
 
       if (_syncQueued) {
         _syncQueued = false;
-        unawaited(sync());
+        final queuedRemotePull = _queuedRemotePull;
+        _queuedRemotePull = false;
+        unawaited(sync(forceRemotePull: queuedRemotePull));
       }
     }
   }

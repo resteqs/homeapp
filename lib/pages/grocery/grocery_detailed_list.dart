@@ -51,23 +51,19 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
 
     _textController.clear();
     await widget.repository.addItem(name, locale: _locale);
-    await widget.onFetchLists();
   }
 
   Future<void> _toggleItem(GroceryItem item) async {
     await widget.repository.toggleItem(item);
-    await widget.onFetchLists();
   }
 
   Future<void> _deleteItem(GroceryItem item) async {
     await widget.repository.deleteItem(item);
-    await widget.onFetchLists();
   }
 
   Future<void> _deleteBoughtItems(List<GroceryItem> boughtItems) async {
     if (boughtItems.isEmpty) return;
     await widget.repository.deleteItems(boughtItems);
-    await widget.onFetchLists();
   }
 
   List<GroceryItem> get _selectedItems => widget.repository.items
@@ -154,7 +150,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     if (action == SelectionAction.delete) {
       final selected = _selectedItems;
       await widget.repository.deleteItems(selected);
-      await widget.onFetchLists();
       _clearSelection();
       return;
     }
@@ -220,7 +215,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     if (targetListId == null || targetListId.isEmpty) return;
 
     await widget.repository.moveItemsToList(selected, targetListId);
-    await widget.onFetchLists();
     _clearSelection();
   }
 
@@ -245,9 +239,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                 unit,
                 locale: _locale,
               );
-              if (mounted) {
-                await widget.onFetchLists();
-              }
             },
             onDelete: (itemToDelete) async {
               await _deleteItem(itemToDelete);

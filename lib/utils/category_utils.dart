@@ -9,14 +9,17 @@ class CategoryVisual {
 }
 
 class CategoryUtils {
+  static final Map<String, String> _cache = {};
   static String categoryKeyFromRaw(String rawCategory) {
+    if (_cache.containsKey(rawCategory)) return _cache[rawCategory]!;
+
     final category = rawCategory.toLowerCase();
 
     if (category.contains('obst') ||
         category.contains('gemu') ||
         category.contains('fruit') ||
         category.contains('veg')) {
-      return 'produce';
+      _cache[rawCategory] = 'produce'; return 'produce';
     }
 
     if (category.contains('dairy') ||
@@ -24,14 +27,14 @@ class CategoryUtils {
         category.contains('kase') ||
         category.contains('käse') ||
         category.contains('milch')) {
-      return 'dairy';
+      _cache[rawCategory] = 'dairy'; return 'dairy';
     }
 
     if (category.contains('bakery') ||
         category.contains('baker') ||
         category.contains('bread') ||
         category.contains('brot')) {
-      return 'bakery';
+      _cache[rawCategory] = 'bakery'; return 'bakery';
     }
 
     if (category.contains('drink') ||
@@ -39,11 +42,11 @@ class CategoryUtils {
         category.contains('getränk') ||
         category.contains('water') ||
         category.contains('wasser')) {
-      return 'drinks';
+      _cache[rawCategory] = 'drinks'; return 'drinks';
     }
 
     if (category.contains('snack') || category.contains('sweet') || category.contains('su')) {
-      return 'snacks';
+      _cache[rawCategory] = 'snacks'; return 'snacks';
     }
 
     if (category.contains('care') ||
@@ -51,7 +54,7 @@ class CategoryUtils {
         category.contains('reinigung') ||
         category.contains('hygiene') ||
         category.contains('pflege')) {
-      return 'care';
+      _cache[rawCategory] = 'care'; return 'care';
     }
 
     if (category.contains('meat') ||
@@ -59,9 +62,10 @@ class CategoryUtils {
         category.contains('fish') ||
         category.contains('fisch') ||
         category.contains('deli')) {
-      return 'meat';
+      _cache[rawCategory] = 'meat'; return 'meat';
     }
 
+    _cache[rawCategory] = 'other';
     return 'other';
   }
 

@@ -25,7 +25,7 @@ class LocalGroceryStore {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'homeapp_local.db'),
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         // Local-first cache for grocery items. sync_status tracks pending writes
         // so UI stays responsive while network sync runs in the background.
@@ -50,6 +50,8 @@ class LocalGroceryStore {
             value TEXT
           )
         ''');
+
+        await _createIndexes(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -64,7 +66,21 @@ class LocalGroceryStore {
                 'ALTER TABLE local_grocery_items ADD COLUMN unit TEXT');
           }
         }
+        if (oldVersion < 4) {
+          await _createIndexes(db);
+        }
       },
+    );
+  }
+
+  Future<void> _createIndexes(DatabaseExecutor db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_local_grocery_items_list_updated '
+      'ON local_grocery_items(list_id, updated_at DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_local_grocery_items_list_sync '
+      'ON local_grocery_items(list_id, sync_status)',
     );
   }
 
@@ -170,12 +186,37 @@ class LocalGroceryStore {
     );
   }
 
+  Future<void> markUpsertsSynced(List<String> ids) async {
+    if (ids.isEmpty) return;
+
+    final db = await database;
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await db.rawUpdate(
+      'UPDATE local_grocery_items '
+      'SET sync_status = ? '
+      'WHERE sync_status = ? AND deleted_at IS NULL AND id IN ($placeholders)',
+      ['synced', 'pending_upsert', ...ids],
+    );
+  }
+
   Future<void> deleteItemById(String id) async {
     final db = await database;
     await db.delete(
       'local_grocery_items',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteItemsByIds(List<String> ids) async {
+    if (ids.isEmpty) return;
+
+    final db = await database;
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await db.delete(
+      'local_grocery_items',
+      where: 'id IN ($placeholders)',
+      whereArgs: ids,
     );
   }
 
@@ -201,5 +242,43 @@ class LocalGroceryStore {
       where: 'list_id = ?',
       whereArgs: [listId],
     );
+  }
+
+  Future<void> mergeRemoteItems(String listId, List<GroceryItem> items) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      if (items.isEmpty) {
+        await txn.delete(
+          'local_grocery_items',
+          where: 'list_id = ? AND sync_status = ?',
+          whereArgs: [listId, 'synced'],
+        );
+        return;
+      }
+
+      final remoteIds = items.map((item) => item.id).toList(growable: false);
+      final placeholders = List.filled(remoteIds.length, '?').join(', ');
+      await txn.delete(
+        'local_grocery_items',
+        where: 'list_id = ? AND sync_status = ? AND id NOT IN ($placeholders)',
+        whereArgs: [listId, 'synced', ...remoteIds],
+      );
+
+      final batch = txn.batch();
+      for (final item in items) {
+        batch.update(
+          'local_grocery_items',
+          item.toMap(),
+          where: 'id = ? AND sync_status = ?',
+          whereArgs: [item.id, 'synced'],
+        );
+        batch.insert(
+          'local_grocery_items',
+          item.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+      await batch.commit(noResult: true);
+    });
   }
 }
