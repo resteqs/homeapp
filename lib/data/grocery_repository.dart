@@ -102,6 +102,7 @@ class GroceryRepository extends ChangeNotifier {
       updatedAt: now,
       deletedAt: null,
       syncStatus: 'pending_upsert',
+      quantity: 1,
     );
 
     await _localStore.upsertItem(item);
@@ -136,6 +137,43 @@ class GroceryRepository extends ChangeNotifier {
     unawaited(sync());
   }
 
+  Future<void> updateItemDetails(GroceryItem item, String newName, int newQuantity) async {
+    final updated = item.copyWith(
+      name: newName,
+      quantity: newQuantity,
+      updatedAt: DateTime.now().toUtc(),
+      syncStatus: 'pending_upsert',
+    );
+
+    await _localStore.upsertItem(updated);
+    await refreshFromLocal();
+    unawaited(sync());
+  }
+
+  Future<List<Map<String, dynamic>>> fetchGroceryLists() async {
+    final response = await _supabase
+        .from('grocery_lists')
+        .select('''
+          id,
+          name,
+          grocery_list_items (
+            id,
+            is_bought,
+            deleted_at
+          )
+        ''')
+        .order('created_at');
+    
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> setActiveList(String id) async {
+    _listId = id;
+    await _localStore.setMeta('active_grocery_list_id', id);
+    await refreshFromLocal();
+    unawaited(sync());
+  }
+
   Future<void> sync() async {
     final id = _listId;
     if (id == null) return;
@@ -161,6 +199,7 @@ class GroceryRepository extends ChangeNotifier {
             'updated_at': item.updatedAt.toIso8601String(),
             'deleted_at': null,
             'updated_by': _supabase.auth.currentUser?.id,
+            'quantity': item.quantity,
           },
           onConflict: 'id',
         );
@@ -179,7 +218,7 @@ class GroceryRepository extends ChangeNotifier {
 
       final remote = await _supabase
           .from('grocery_list_items')
-          .select('id, list_id, name, category, is_bought, updated_at, deleted_at')
+          .select('id, list_id, name, category, is_bought, quantity, updated_at, deleted_at')
           .eq('list_id', id)
           .isFilter('deleted_at', null)
           .order('updated_at', ascending: false);
