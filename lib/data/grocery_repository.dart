@@ -733,9 +733,16 @@ class GroceryRepository extends ChangeNotifier {
       throw ArgumentError('List name cannot be empty.');
     }
 
+    final householdId = _householdId ??
+        await _localStore.getMeta('active_household_id') ??
+        await _resolveHouseholdId(null);
+    if (householdId == null || householdId.isEmpty) {
+      throw StateError('Cannot create list without an active household.');
+    }
+
     final created = await _supabase
         .from('grocery_lists')
-        .insert({'name': name})
+        .insert({'name': name, 'household_id': householdId})
         .select()
         .single();
     return Map<String, dynamic>.from(created);

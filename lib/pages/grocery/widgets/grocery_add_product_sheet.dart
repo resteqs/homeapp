@@ -214,7 +214,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     return value[0].toUpperCase() + value.substring(1);
   }
 
-  void _toggleProduct(String name) async {
+  void _increaseProduct(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty) return;
 
@@ -223,7 +223,15 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
         _capitalizeFirstLetter(normalized);
     final item = _getItemFromList(canonical);
     if (item != null) {
-      await widget.repository.deleteItem(item);
+      await widget.repository.updateItemDetails(
+        item,
+        item.name,
+        item.quantity + 1,
+        item.unit,
+        item.notes,
+        item.badgeEmoji,
+        locale: widget.locale,
+      );
     } else {
       await widget.repository.addItem(canonical, locale: widget.locale);
       // Clear the visible input but keep the current filtered list until
@@ -235,6 +243,32 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     }
   }
 
+  void _decreaseProduct(String name) async {
+    final item = _getItemFromList(name);
+    if (item == null) return;
+
+    if (item.quantity <= 1) {
+      await widget.repository.deleteItem(item);
+      return;
+    }
+
+    await widget.repository.updateItemDetails(
+      item,
+      item.name,
+      item.quantity - 1,
+      item.unit,
+      item.notes,
+      item.badgeEmoji,
+      locale: widget.locale,
+    );
+  }
+
+  void _removeProduct(String name) async {
+    final item = _getItemFromList(name);
+    if (item == null) return;
+    await widget.repository.deleteItem(item);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -243,6 +277,10 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       animation: widget.repository,
       builder: (context, _) {
         final activeItemNamesLower = _activeItemNamesLower;
+        final activeItemsByNameLower = <String, GroceryItem>{
+          for (final item in widget.repository.items.where((item) => !item.isBought))
+            item.name.toLowerCase(): item,
+        };
 
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -279,16 +317,49 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
             itemCount: _filteredRecommendations.length,
             itemBuilder: (context, index) {
               final product = _filteredRecommendations[index];
+              final activeItem = activeItemsByNameLower[product.toLowerCase()];
               final isInList =
                   activeItemNamesLower.contains(product.toLowerCase());
 
               return ListTile(
                 leading: isInList
-                    ? CircleAvatar(
-                        radius: 16,
-                        backgroundColor: colorScheme.outlineVariant,
-                        child: Icon(Icons.check,
-                            color: colorScheme.onSurface, size: 20),
+                    ? SizedBox(
+                        width: 72,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                iconSize: 16,
+                                color: colorScheme.onSurfaceVariant,
+                                icon: const Icon(Icons.add),
+                                onPressed: () => _increaseProduct(product),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest,
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                iconSize: 16,
+                                color: colorScheme.onSurfaceVariant,
+                                icon: const Icon(Icons.remove),
+                                onPressed: () => _decreaseProduct(product),
+                              ),
+                            ),
+                          ],
+                        ),
                       )
                     : CircleAvatar(
                         radius: 16,
@@ -304,12 +375,34 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
                   ),
                 ),
                 trailing: isInList
-                    ? IconButton(
-                        icon: Icon(Icons.close, color: colorScheme.error),
-                        onPressed: () => _toggleProduct(product),
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (activeItem != null &&
+                              (activeItem.quantity > 1 ||
+                                  (activeItem.unit != null &&
+                                      activeItem.unit!.trim().isNotEmpty)))
+                            Text(
+                              '${activeItem.quantity}${activeItem.unit != null && activeItem.unit!.trim().isNotEmpty ? ' ${activeItem.unit}' : ''}',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          if (activeItem != null &&
+                              (activeItem.quantity > 1 ||
+                                  (activeItem.unit != null &&
+                                      activeItem.unit!.trim().isNotEmpty)))
+                            const SizedBox(width: 12),
+                          IconButton(
+                            icon: Icon(Icons.close, color: colorScheme.error),
+                            onPressed: () => _removeProduct(product),
+                          ),
+                        ],
                       )
                     : null,
-                onTap: () => _toggleProduct(product),
+                onTap: isInList ? null : () => _increaseProduct(product),
               );
             },
           ),

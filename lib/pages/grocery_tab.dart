@@ -175,10 +175,10 @@ class _GroceryTabState extends State<GroceryTab> {
       setState(() {
         _showingOverview = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not create list.')),
+        SnackBar(content: Text('Could not create list: $error')),
       );
     }
   }
