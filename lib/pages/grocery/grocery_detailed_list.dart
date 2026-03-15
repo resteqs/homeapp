@@ -364,13 +364,11 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                               ),
                             ),
                           ),
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final item = items[index];
-                                  return GroceryItemTile(
+                          SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final item = items[index];
+                                return GroceryItemTile(
                                     item: item,
                                     isBought: false,
                                     isSelected: _selectedItemIds.contains(item.id),
@@ -390,38 +388,56 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                 childCount: items.length,
                               ),
                             ),
-                          ),
                         ],
                       );
                     }),
                     if (boughtItems.isNotEmpty) ...[
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                         sliver: SliverToBoxAdapter(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                l10n.groceryBoughtItems,
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.outline,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '(${boughtItems.length}) ${l10n.groceryBoughtItems}', // E.g. (2) Bought Items
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                              ),
-                              TextButton.icon(
-                                onPressed: () => _deleteBoughtItems(boughtItems),
-                                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-                                label: Text(l10n.groceryDeleteAll),
-                              ),
-                            ],
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                                GestureDetector(
+                                  onTap: () => _deleteBoughtItems(boughtItems),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
                               final item = boughtItems[index];
                               return GroceryItemTile(
                                 item: item,
@@ -443,7 +459,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                             childCount: boughtItems.length,
                           ),
                         ),
-                      ),
                     ],
                     const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
                   ],

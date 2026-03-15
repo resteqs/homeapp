@@ -66,19 +66,37 @@ class GroceryItemTile extends StatelessWidget {
         return true;
       },
       onDismissed: (_) => onDelete(item),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 4),
-        color: isSelected
-            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.55)
-            : Theme.of(context).colorScheme.surface,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.55)
+              : Theme.of(context).colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+        ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          leading: Checkbox(
-            value: item.isBought,
-            onChanged: (_) => onToggle(item),
-            shape: const CircleBorder(),
-            activeColor: Colors.blueAccent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          leading: GestureDetector(
+            onTap: () => onToggle(item),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isBought ? const Color(0xFF34C759) : Colors.transparent,
+                border: Border.all(
+                  color: isBought ? const Color(0xFF34C759) : const Color(0xFF4A90E2),
+                  width: 2,
+                ),
+              ),
+              child: isBought
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : null,
+            ),
           ),
           title: Text(
             item.name,
@@ -89,34 +107,36 @@ class GroceryItemTile extends StatelessWidget {
               color: isBought ? Theme.of(context).colorScheme.outline : null,
             ),
           ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (item.quantity > 1 || (item.unit != null && item.unit!.trim().isNotEmpty))
                 Text(
                   '${item.quantity}${item.unit != null && item.unit!.trim().isNotEmpty ? ' ${item.unit}' : ''}',
                   style: TextStyle(
                     color: isBought
                         ? Theme.of(context).colorScheme.outline
                         : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(
+              if (item.quantity > 1 || (item.unit != null && item.unit!.trim().isNotEmpty))
+                const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: isBought
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                    : categoryVisual.color.withValues(alpha: 0.15),
+                child: Icon(
                   categoryVisual.icon,
-                  size: 18,
+                  size: 16,
                   color: isBought
                       ? Theme.of(context).colorScheme.outline
                       : categoryVisual.color,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           onLongPress: () => onLongPress(item),
           onTap: () => onTap(item),

@@ -44,20 +44,18 @@ class GroceryOverview extends StatelessWidget {
                     final progress = totalCount > 0 ? boughtCount / totalCount : 0.0;
 
                     return Card(
-                      elevation: 0,
+                      elevation: 1,
+                      shadowColor: Colors.black.withValues(alpha: 0.1),
                       color: Theme.of(context).colorScheme.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        ),
                       ),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => onListSelected(listId),
                         child: Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -67,11 +65,12 @@ class GroceryOverview extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       listName,
-                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   PopupMenuButton<ListMenuAction>(
+                                    padding: EdgeInsets.zero,
                                     onSelected: (action) {
                                       if (action == ListMenuAction.delete) {
                                         onDeleteList(listId: listId, listName: listName);
@@ -86,12 +85,11 @@ class GroceryOverview extends StatelessWidget {
                                     icon: Icon(
                                       Icons.more_vert,
                                       color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      size: 20,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 12),
                               Row(
                                 children: [
                                   Expanded(
@@ -100,18 +98,18 @@ class GroceryOverview extends StatelessWidget {
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade600),
+                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C759)),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 16),
                                   Text(
                                     '$boughtCount/$totalCount',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w600,
                                       color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      fontSize: 13,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],

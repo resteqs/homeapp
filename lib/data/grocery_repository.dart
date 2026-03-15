@@ -9,9 +9,9 @@ import 'package:homeapp/data/local_grocery_store.dart';
 import 'package:homeapp/models/grocery_item.dart';
 
 /// Provider that manages grocery lists and their items.
-/// 
+///
 /// This repository implements an offline-first data synchronization model by
-/// integrating [LocalGroceryStore] (SQLite) and [SupabaseClient]. 
+/// integrating [LocalGroceryStore] (SQLite) and [SupabaseClient].
 /// Changes hit the local DB first using [syncStatus] to track pending writes.
 class GroceryRepository extends ChangeNotifier {
   GroceryRepository({
