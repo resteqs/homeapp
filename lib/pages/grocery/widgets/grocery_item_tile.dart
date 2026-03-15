@@ -150,6 +150,19 @@ class GroceryItemTile extends StatelessWidget {
               if (item.quantity > 1 ||
                   (item.unit != null && item.unit!.trim().isNotEmpty))
                 const SizedBox(width: 12),
+              if (item.badgeEmoji != null && item.badgeEmoji!.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Text(
+                    item.badgeEmoji!,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isBought
+                          ? Theme.of(context).colorScheme.outline
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
               CircleAvatar(
                 radius: 16,
                 backgroundColor: isBought

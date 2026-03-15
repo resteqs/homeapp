@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 
-enum ListMenuAction { delete }
+enum ListMenuAction { rename, delete }
 
 /// Overview screen listing all grocery lists and completion progress.
 class GroceryOverview extends StatelessWidget {
   final List<Map<String, dynamic>> lists;
   final bool loadingLists;
   final ValueChanged<String> onListSelected;
+  final Future<void> Function({
+    required String listId,
+    required String currentName,
+  }) onRenameList;
+  final Future<void> Function() onCreateList;
   final void Function({required String listId, required String listName})
       onDeleteList;
 
@@ -16,6 +21,8 @@ class GroceryOverview extends StatelessWidget {
     required this.lists,
     required this.loadingLists,
     required this.onListSelected,
+    required this.onRenameList,
+    required this.onCreateList,
     required this.onDeleteList,
   });
 
@@ -78,23 +85,45 @@ class GroceryOverview extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      listName,
-                                      style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w700),
-                                      overflow: TextOverflow.ellipsis,
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () async {
+                                        if (listId.isEmpty) return;
+                                        await onRenameList(
+                                          listId: listId,
+                                          currentName: listName,
+                                        );
+                                      },
+                                      child: Text(
+                                        listName,
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w700),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
                                   PopupMenuButton<ListMenuAction>(
                                     padding: EdgeInsets.zero,
-                                    onSelected: (action) {
+                                    onSelected: (action) async {
+                                      if (action == ListMenuAction.rename) {
+                                        if (listId.isEmpty) return;
+                                        await onRenameList(
+                                          listId: listId,
+                                          currentName: listName,
+                                        );
+                                        return;
+                                      }
                                       if (action == ListMenuAction.delete) {
                                         onDeleteList(
                                             listId: listId, listName: listName);
                                       }
                                     },
                                     itemBuilder: (context) => [
+                                      const PopupMenuItem<ListMenuAction>(
+                                        value: ListMenuAction.rename,
+                                        child: Text('Rename list'),
+                                      ),
                                       PopupMenuItem<ListMenuAction>(
                                         value: ListMenuAction.delete,
                                         child: Text(l10n.groceryDeleteList),
@@ -149,6 +178,11 @@ class GroceryOverview extends StatelessWidget {
                     );
                   },
                 ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: onCreateList,
+        icon: const Icon(Icons.add),
+        label: const Text('New list'),
+      ),
     );
   }
 }

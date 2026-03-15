@@ -492,6 +492,8 @@ class GroceryRepository extends ChangeNotifier {
       syncStatus: 'pending_upsert',
       quantity: 1,
       unit: null,
+      notes: null,
+      badgeEmoji: null,
     );
 
     await _localStore.upsertItem(item);
@@ -555,7 +557,9 @@ class GroceryRepository extends ChangeNotifier {
     GroceryItem item,
     String newName,
     int newQuantity,
-    String? newUnit, {
+    String? newUnit,
+    String? notes,
+    String? badgeEmoji, {
     String locale = 'en',
   }) async {
     final normalizedName = newName.trim();
@@ -567,6 +571,8 @@ class GroceryRepository extends ChangeNotifier {
       category: category,
       quantity: newQuantity,
       unit: newUnit,
+      notes: notes,
+      badgeEmoji: badgeEmoji,
       updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending_upsert',
     );
@@ -591,6 +597,32 @@ class GroceryRepository extends ChangeNotifier {
         ''').order('created_at');
 
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<Map<String, dynamic>> createList(String rawName) async {
+    final name = rawName.trim();
+    if (name.isEmpty) {
+      throw ArgumentError('List name cannot be empty.');
+    }
+
+    final created = await _supabase
+        .from('grocery_lists')
+        .insert({'name': name})
+        .select()
+        .single();
+    return Map<String, dynamic>.from(created);
+  }
+
+  Future<void> renameList(String listId, String rawName) async {
+    final name = rawName.trim();
+    if (name.isEmpty) {
+      throw ArgumentError('List name cannot be empty.');
+    }
+
+    await _supabase
+        .from('grocery_lists')
+        .update({'name': name})
+        .eq('id', listId);
   }
 
   /// Switches active list and forces one remote pull for fresh list state.
@@ -676,6 +708,8 @@ class GroceryRepository extends ChangeNotifier {
                       'updated_by': _supabase.auth.currentUser?.id,
                       'quantity': item.quantity,
                       'unit': item.unit,
+                      'notes': item.notes,
+                      'badge_emoji': item.badgeEmoji,
                     },
                   )
                   .toList(growable: false),
@@ -701,7 +735,7 @@ class GroceryRepository extends ChangeNotifier {
         final remote = await _supabase
             .from('grocery_list_items')
             .select(
-                'id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
+            'id, list_id, name, category, is_bought, quantity, unit, notes, badge_emoji, updated_at, deleted_at')
             .eq('list_id', id)
             .isFilter('deleted_at', null)
             .order('updated_at', ascending: false);

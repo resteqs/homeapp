@@ -111,6 +111,100 @@ class _GroceryTabState extends State<GroceryTab> {
     }
   }
 
+  Future<String?> _promptForListName({
+    required String title,
+    required String actionLabel,
+    String initialValue = '',
+  }) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        var draftName = initialValue;
+        return AlertDialog(
+          title: Text(title),
+          content: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return TextFormField(
+                initialValue: initialValue,
+                autofocus: true,
+                textInputAction: TextInputAction.done,
+                onChanged: (value) {
+                  setStateDialog(() {
+                    draftName = value;
+                  });
+                },
+                onFieldSubmitted: (value) =>
+                    Navigator.of(context).pop(value.trim()),
+                decoration: const InputDecoration(
+                  hintText: 'List name',
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(draftName.trim()),
+              child: Text(actionLabel),
+            ),
+          ],
+        );
+      },
+    );
+    return result?.trim();
+  }
+
+  Future<void> _showCreateListDialog() async {
+    final name = await _promptForListName(
+      title: 'Create new list',
+      actionLabel: 'Create',
+    );
+    if (name == null || name.isEmpty) return;
+
+    try {
+      final created = await _repository.createList(name);
+      await _fetchLists();
+      final createdId = created['id']?.toString();
+      if (createdId != null && createdId.isNotEmpty) {
+        await _repository.setActiveList(createdId);
+      }
+      if (!mounted) return;
+      setState(() {
+        _showingOverview = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not create list.')),
+      );
+    }
+  }
+
+  Future<void> _showRenameListDialog({
+    required String listId,
+    required String currentName,
+  }) async {
+    final name = await _promptForListName(
+      title: 'Rename list',
+      actionLabel: 'Save',
+      initialValue: currentName,
+    );
+    if (name == null || name.isEmpty || name == currentName) return;
+
+    try {
+      await _repository.renameList(listId, name);
+      await _fetchLists();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not rename list.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
@@ -124,6 +218,8 @@ class _GroceryTabState extends State<GroceryTab> {
                 if (!mounted) return;
                 setState(() => _showingOverview = false);
               },
+              onRenameList: _showRenameListDialog,
+              onCreateList: _showCreateListDialog,
               onDeleteList: _showDeleteListDialog,
             )
           : GroceryDetailedList(
@@ -134,6 +230,8 @@ class _GroceryTabState extends State<GroceryTab> {
                 setState(() => _showingOverview = true);
               },
               onFetchLists: _fetchLists,
+              onCreateList: _showCreateListDialog,
+              onRenameList: _showRenameListDialog,
               onDeleteList: _showDeleteListDialog,
             ),
     );

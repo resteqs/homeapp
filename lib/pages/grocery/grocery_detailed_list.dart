@@ -9,7 +9,9 @@ import 'package:homeapp/pages/grocery/widgets/grocery_add_product_sheet.dart';
 
 enum SelectionAction { delete, move, cancel }
 
-enum DetailedListMenuAction { delete }
+enum DetailedListMenuAction { rename, add, delete }
+
+enum BoughtItemsAction { deleteAll }
 
 /// Detailed grocery list screen with grouping, editing, and batch actions.
 class GroceryDetailedList extends StatefulWidget {
@@ -17,6 +19,11 @@ class GroceryDetailedList extends StatefulWidget {
   final GroceryRepository repository;
   final VoidCallback onBack;
   final Future<void> Function() onFetchLists;
+  final Future<void> Function() onCreateList;
+  final Future<void> Function({
+    required String listId,
+    required String currentName,
+  }) onRenameList;
   final void Function({required String listId, required String listName})
       onDeleteList;
 
@@ -26,6 +33,8 @@ class GroceryDetailedList extends StatefulWidget {
     required this.repository,
     required this.onBack,
     required this.onFetchLists,
+    required this.onCreateList,
+    required this.onRenameList,
     required this.onDeleteList,
   });
 
@@ -227,12 +236,14 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           child: GroceryEditSheet(
             item: item,
-            onSave: (editedItem, newName, quantity, unit) async {
+            onSave: (editedItem, newName, quantity, unit, notes, badgeEmoji) async {
               await widget.repository.updateItemDetails(
                 editedItem,
                 newName,
                 quantity,
                 unit,
+                notes,
+                badgeEmoji,
                 locale: _locale,
               );
             },
@@ -268,8 +279,21 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
         ),
         title: _selectionMode
             ? Text(l10n.groceryItemsSelected(_selectedItemIds.length))
-            : Text(listName,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            : GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () async {
+                  final currentListId = widget.repository.listId;
+                  if (currentListId == null) return;
+                  await widget.onRenameList(
+                    listId: currentListId,
+                    currentName: listName,
+                  );
+                },
+                child: Text(
+                  listName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
         actions: [
           if (_selectionMode)
             IconButton(
@@ -283,7 +307,20 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
             ),
           if (!_selectionMode)
             PopupMenuButton<DetailedListMenuAction>(
-              onSelected: (action) {
+              onSelected: (action) async {
+                if (action == DetailedListMenuAction.rename) {
+                  final currentListId = widget.repository.listId;
+                  if (currentListId == null) return;
+                  await widget.onRenameList(
+                    listId: currentListId,
+                    currentName: listName,
+                  );
+                  return;
+                }
+                if (action == DetailedListMenuAction.add) {
+                  await widget.onCreateList();
+                  return;
+                }
                 if (action == DetailedListMenuAction.delete) {
                   final currentListId = widget.repository.listId;
                   if (currentListId == null) return;
@@ -292,6 +329,14 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem<DetailedListMenuAction>(
+                  value: DetailedListMenuAction.rename,
+                  child: Text('Rename list'),
+                ),
+                const PopupMenuItem<DetailedListMenuAction>(
+                  value: DetailedListMenuAction.add,
+                  child: Text('New list'),
+                ),
                 PopupMenuItem<DetailedListMenuAction>(
                   value: DetailedListMenuAction.delete,
                   child: Text(l10n.groceryDeleteList),
@@ -382,7 +427,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                 Row(
                                   children: [
                                     Text(
-                                      '(${boughtItems.length}) ${l10n.groceryBoughtItems}', // E.g. (2) Bought Items
+                                      '(${boughtItems.length}) ${l10n.groceryBoughtItems}',
                                       style: TextStyle(
                                         color: Theme.of(context)
                                             .colorScheme
@@ -391,25 +436,28 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                         fontSize: 14,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      size: 18,
-                                    ),
                                   ],
                                 ),
-                                GestureDetector(
-                                  onTap: () => _deleteBoughtItems(boughtItems),
-                                  child: Icon(
-                                    Icons.delete_outline,
+                                PopupMenuButton<BoughtItemsAction>(
+                                  padding: EdgeInsets.zero,
+                                  icon: Icon(
+                                    Icons.more_vert,
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,
                                     size: 20,
                                   ),
+                                  onSelected: (action) async {
+                                    if (action == BoughtItemsAction.deleteAll) {
+                                      await _deleteBoughtItems(boughtItems);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem<BoughtItemsAction>(
+                                      value: BoughtItemsAction.deleteAll,
+                                      child: Text(l10n.groceryDeleteAll),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

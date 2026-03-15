@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:homeapp/globals/themes.dart';
-
 import 'package:homeapp/models/grocery_item.dart';
+import 'package:homeapp/utils/category_utils.dart';
 
 /// Bottom sheet for editing one grocery item and optional metadata fields.
 class GroceryEditSheet extends StatefulWidget {
   final GroceryItem item;
   final Future<void> Function(
-      GroceryItem item, String newName, int quantity, String? unit) onSave;
+    GroceryItem item,
+    String newName,
+    int quantity,
+    String? unit,
+    String? notes,
+    String? badgeEmoji,
+  ) onSave;
   final Future<void> Function(GroceryItem item) onDelete;
 
   const GroceryEditSheet({
@@ -22,43 +27,36 @@ class GroceryEditSheet extends StatefulWidget {
 }
 
 class _GroceryEditSheetState extends State<GroceryEditSheet> {
-  late TextEditingController _nameController;
-  late TextEditingController _quantityController;
-  late TextEditingController _unitController;
-  late int _quantity;
+  late final TextEditingController _nameController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _unitController;
+  late final TextEditingController _notesController;
 
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
   final FocusNode _nameNode = FocusNode();
   final FocusNode _quantityNode = FocusNode();
   final FocusNode _unitNode = FocusNode();
-  final FocusNode _noteNode = FocusNode();
-  final FocusNode _priceNode = FocusNode();
+  final FocusNode _notesNode = FocusNode();
 
-  // Mock fields
-  final TextEditingController _noteController = TextEditingController(
-      text: "👆 Tippe auf das Element, um es zu bearbeiten");
-  final TextEditingController _priceController =
-      TextEditingController(text: "0,00 €");
-
-  bool _important = false;
-  bool _notAvailable = false;
-  bool _onlyOnSale = false;
+  late int _quantity;
+  String? _selectedBadgeEmoji;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
-    _quantity = widget.item.quantity;
-    _quantityController =
-        TextEditingController(text: _quantity > 0 ? _quantity.toString() : '');
+    _quantity = widget.item.quantity > 0 ? widget.item.quantity : 1;
+    _quantityController = TextEditingController(text: _quantity.toString());
     _unitController = TextEditingController(text: widget.item.unit ?? '');
+    _notesController = TextEditingController(text: widget.item.notes ?? '');
+    _selectedBadgeEmoji = widget.item.badgeEmoji;
 
     void expandSheet() {
       if (_sheetController.isAttached) {
         _sheetController.animateTo(
           0.95,
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
         );
       }
@@ -73,11 +71,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     _unitNode.addListener(() {
       if (_unitNode.hasFocus) expandSheet();
     });
-    _noteNode.addListener(() {
-      if (_noteNode.hasFocus) expandSheet();
-    });
-    _priceNode.addListener(() {
-      if (_priceNode.hasFocus) expandSheet();
+    _notesNode.addListener(() {
+      if (_notesNode.hasFocus) expandSheet();
     });
   }
 
@@ -86,53 +81,93 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     _nameController.dispose();
     _quantityController.dispose();
     _unitController.dispose();
-    _noteController.dispose();
-    _priceController.dispose();
+    _notesController.dispose();
     _sheetController.dispose();
     _nameNode.dispose();
     _quantityNode.dispose();
     _unitNode.dispose();
-    _noteNode.dispose();
-    _priceNode.dispose();
+    _notesNode.dispose();
     super.dispose();
   }
 
-  void _save() {
+  void _onHeaderVerticalDrag(DragUpdateDetails details) {
+    if (!_sheetController.isAttached) return;
+    final delta = details.primaryDelta ?? 0;
+    final viewportHeight = MediaQuery.of(context).size.height;
+    final nextSize =
+        (_sheetController.size - (delta / viewportHeight)).clamp(0.45, 0.95);
+    _sheetController.jumpTo(nextSize);
+  }
+
+  void _toggleBadge(String emoji) {
+    setState(() {
+      _selectedBadgeEmoji = _selectedBadgeEmoji == emoji ? null : emoji;
+    });
+  }
+
+  Future<void> _save() async {
     final newName = _nameController.text.trim();
     if (newName.isEmpty) return;
+
+    final parsedQuantity = int.tryParse(_quantityController.text.trim());
+    final safeQuantity = parsedQuantity == null || parsedQuantity < 1
+        ? 1
+        : parsedQuantity;
     final unitText = _unitController.text.trim();
-    widget
-        .onSave(
-            widget.item, newName, _quantity, unitText.isEmpty ? null : unitText)
-        .then((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+    final notesText = _notesController.text.trim();
+
+    await widget.onSave(
+      widget.item,
+      newName,
+      safeQuantity,
+      unitText.isEmpty ? null : unitText,
+      notesText.isEmpty ? null : notesText,
+      _selectedBadgeEmoji,
+    );
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Widget _buildBadgeChip(String emoji, String label) {
+    final selected = _selectedBadgeEmoji == emoji;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ChoiceChip(
+      selected: selected,
+      onSelected: (_) => _toggleBadge(emoji),
+      label: Text('$emoji $label'),
+      selectedColor: colorScheme.primaryContainer,
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      side: BorderSide(
+        color: selected ? Colors.transparent : colorScheme.outlineVariant,
+      ),
+      labelStyle: TextStyle(
+        color: selected
+            ? colorScheme.onPrimaryContainer
+            : colorScheme.onSurfaceVariant,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bgColor = colorScheme.surface;
-    final surfaceColor = colorScheme.surfaceContainerHighest;
-    final accentGreen = colorScheme.primary;
-    final textColor = colorScheme.onSurface;
-    final secondaryTextColor = colorScheme.onSurfaceVariant;
-    final subtleBorderColor = colorScheme.outlineVariant.withValues(alpha: 0.6);
+    final categoryKey = CategoryUtils.categoryKeyFromRaw(widget.item.category);
+    final categoryName = CategoryUtils.localizedCategoryName(context, categoryKey);
 
     return DraggableScrollableSheet(
       controller: _sheetController,
-      initialChildSize: 0.50,
-      minChildSize: 0.50,
+      initialChildSize: 0.62,
+      minChildSize: 0.45,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          color: bgColor,
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 12,
-          ),
+          color: colorScheme.surface,
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
           child: SafeArea(
             child: SingleChildScrollView(
               controller: scrollController,
@@ -143,39 +178,33 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: subtleBorderColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Speichern button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _save,
-                      child: Text(
-                        'Speichern',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: _onHeaderVerticalDrag,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Container(
+                          width: 56,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
                         ),
                       ),
                     ),
                   ),
-
-                  // Name input
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _save,
+                      child: const Text('Save'),
+                    ),
+                  ),
                   Container(
                     decoration: BoxDecoration(
-                      color: surfaceColor,
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding:
@@ -186,47 +215,50 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           child: TextField(
                             controller: _nameController,
                             focusNode: _nameNode,
-                            style: TextStyle(
-                                color: textColor,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold),
-                            decoration: InputDecoration(
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            decoration: const InputDecoration(
                               border: InputBorder.none,
-                              hintText: 'Artikelname',
-                              hintStyle: TextStyle(color: secondaryTextColor),
+                              hintText: 'Item name',
                             ),
                           ),
                         ),
-                        Icon(Icons.back_hand,
-                            color: accentGreen,
-                            size: 20), // Yellow pointing hand approximation
+                        const SizedBox(width: 8),
+                        Text(
+                          categoryName,
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Quantity and Unit
                   Row(
                     children: [
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: surfaceColor,
+                            color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextField(
                             controller: _quantityController,
                             focusNode: _quantityNode,
-                            style: TextStyle(color: textColor),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Menge',
-                              hintStyle: TextStyle(color: secondaryTextColor),
-                            ),
                             keyboardType: TextInputType.number,
-                            onChanged: (val) {
-                              _quantity = int.tryParse(val) ?? 0;
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Qty',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                final parsed = int.tryParse(value);
+                                _quantity = parsed == null || parsed < 1 ? 1 : parsed;
+                              });
                             },
                           ),
                         ),
@@ -235,18 +267,16 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: surfaceColor,
+                            color: colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextField(
                             controller: _unitController,
                             focusNode: _unitNode,
-                            style: TextStyle(color: textColor),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               border: InputBorder.none,
-                              hintText: 'Einheit',
-                              hintStyle: TextStyle(color: secondaryTextColor),
+                              hintText: 'Unit',
                             ),
                           ),
                         ),
@@ -254,17 +284,16 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: surfaceColor,
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          icon: Icon(Icons.remove, color: textColor),
+                          icon: const Icon(Icons.remove),
                           onPressed: _quantity > 1
                               ? () {
                                   setState(() {
                                     _quantity--;
-                                    _quantityController.text =
-                                        _quantity.toString();
+                                    _quantityController.text = _quantity.toString();
                                   });
                                 }
                               : null,
@@ -273,7 +302,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(
-                          color: accentGreen,
+                          color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
@@ -288,142 +317,60 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-
-                  // Mehr Optionen
+                  const SizedBox(height: 20),
                   Text(
-                    'MEHR OPTIONEN',
+                    'NOTES',
                     style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2),
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Notiz
                   Container(
                     decoration: BoxDecoration(
-                      color: surfaceColor,
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Notiz',
-                                style: TextStyle(
-                                    color: secondaryTextColor, fontSize: 12)),
-                            const Spacer(),
-                            Icon(Icons.cancel,
-                                color: secondaryTextColor, size: 16),
-                          ],
-                        ),
                         TextField(
-                          controller: _noteController,
-                          focusNode: _noteNode,
-                          style: TextStyle(color: textColor, fontSize: 14),
+                          controller: _notesController,
+                          focusNode: _notesNode,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: EdgeInsets.only(top: 4, bottom: 8),
+                            hintText: 'Add a note for this item',
                           ),
                           maxLines: null,
                         ),
+                        const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            _buildChip('🔥 Wichtig', _important,
-                                () => setState(() => _important = !_important)),
-                            _buildChip(
-                                '❌ Nicht verfügbar',
-                                _notAvailable,
-                                () => setState(
-                                    () => _notAvailable = !_notAvailable)),
-                            _buildChip(
-                                '💰 Nur im Angebot',
-                                _onlyOnSale,
-                                () =>
-                                    setState(() => _onlyOnSale = !_onlyOnSale)),
+                            _buildBadgeChip('🔥', 'Wichtig'),
+                            _buildBadgeChip('❌', 'Nicht verfugbar'),
+                            _buildBadgeChip('💰', 'Nur im Angebot'),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Preis & Gesamt
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: surfaceColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Preis',
-                                  style: TextStyle(
-                                      color: secondaryTextColor, fontSize: 12)),
-                              TextField(
-                                controller: _priceController,
-                                focusNode: _priceNode,
-                                style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Gesamt',
-                                style: TextStyle(
-                                    color: secondaryTextColor, fontSize: 12)),
-                            const SizedBox(height: 4),
-                            Text('-',
-                                style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 24),
-
-                  // Bottom Actions (Delete & Done)
                   Row(
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .errorContainer, // Light red tinted background
+                          color: colorScheme.errorContainer,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
                           icon: Icon(Icons.delete_outline,
-                              color: Theme.of(context).colorScheme.error),
+                              color: colorScheme.error),
                           onPressed: () {
                             widget.onDelete(widget.item);
                             Navigator.of(context).pop();
@@ -434,17 +381,22 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: accentGreen,
+                            backgroundColor: colorScheme.primary,
                             foregroundColor: colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 0,
                           ),
                           onPressed: _save,
-                          child: const Text('Fertig',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            'Done',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -455,42 +407,6 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildChip(String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context)
-                  .colorScheme
-                  .primaryContainer
-                  .withValues(alpha: 0.4)
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.transparent
-                : Theme.of(context)
-                    .colorScheme
-                    .outlineVariant
-                    .withValues(alpha: 0.6),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSurface
-                : Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
     );
   }
 }

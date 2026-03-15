@@ -13,6 +13,8 @@ class GroceryItem {
   final String syncStatus;
   final int quantity;
   final String? unit;
+  final String? notes;
+  final String? badgeEmoji;
 
   const GroceryItem({
     required this.id,
@@ -25,6 +27,8 @@ class GroceryItem {
     required this.syncStatus,
     required this.quantity,
     this.unit,
+    this.notes,
+    this.badgeEmoji,
   });
 
   factory GroceryItem.fromMap(Map<String, dynamic> map) {
@@ -42,6 +46,8 @@ class GroceryItem {
           ? int.tryParse(map['quantity'].toString()) ?? 1
           : 1,
       unit: map['unit']?.toString(),
+      notes: map['notes']?.toString(),
+      badgeEmoji: map['badge_emoji']?.toString(),
     );
   }
 
@@ -57,6 +63,8 @@ class GroceryItem {
       'sync_status': syncStatus,
       'quantity': quantity,
       'unit': unit,
+      'notes': notes,
+      'badge_emoji': badgeEmoji,
     };
   }
 
@@ -71,6 +79,8 @@ class GroceryItem {
     String? syncStatus,
     int? quantity,
     String? unit,
+    String? notes,
+    String? badgeEmoji,
   }) {
     return GroceryItem(
       id: id ?? this.id,
@@ -83,6 +93,8 @@ class GroceryItem {
       syncStatus: syncStatus ?? this.syncStatus,
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
+      notes: notes ?? this.notes,
+      badgeEmoji: badgeEmoji ?? this.badgeEmoji,
     );
   }
 }

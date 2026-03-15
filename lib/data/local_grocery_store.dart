@@ -25,7 +25,7 @@ class LocalGroceryStore {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'homeapp_local.db'),
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         // Local-first cache for grocery items. sync_status tracks pending writes
         // so UI stays responsive while network sync runs in the background.
@@ -40,7 +40,9 @@ class LocalGroceryStore {
             deleted_at TEXT,
             sync_status TEXT NOT NULL,
             quantity INTEGER NOT NULL DEFAULT 1,
-            unit TEXT
+            unit TEXT,
+            notes TEXT,
+            badge_emoji TEXT
           )
         ''');
 
@@ -68,6 +70,16 @@ class LocalGroceryStore {
         }
         if (oldVersion < 4) {
           await _createIndexes(db);
+        }
+        if (oldVersion < 5) {
+          if (!await _columnExists(db, 'local_grocery_items', 'notes')) {
+            await db
+                .execute('ALTER TABLE local_grocery_items ADD COLUMN notes TEXT');
+          }
+          if (!await _columnExists(db, 'local_grocery_items', 'badge_emoji')) {
+            await db.execute(
+                'ALTER TABLE local_grocery_items ADD COLUMN badge_emoji TEXT');
+          }
         }
       },
     );
