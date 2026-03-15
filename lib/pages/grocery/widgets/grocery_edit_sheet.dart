@@ -104,8 +104,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
 
     return DraggableScrollableSheet(
       controller: _sheetController,
-      initialChildSize: 0.30,
-      minChildSize: 0.30,
+      initialChildSize: 0.50,
+      minChildSize: 0.50,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) {

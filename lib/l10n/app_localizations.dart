@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Add an item...'**
   String get groceryAddItem;
 
+  /// No description provided for @groceryAddProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get groceryAddProduct;
+
   /// No description provided for @groceryAdd.
   ///
   /// In en, this message translates to:

@@ -34,6 +34,7 @@
     "groceryMyLists": "My lists",
     "groceryNoLists": "No lists available.",
     "groceryAddItem": "Add an item...",
+    "groceryAddProduct": "Add product",
     "groceryAdd": "ADD",
     "groceryEditItem": "Edit Item",
     "groceryQuantity": "Quantity",

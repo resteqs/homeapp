@@ -5,8 +5,10 @@ import 'package:homeapp/data/grocery_repository.dart';
 import 'package:homeapp/utils/category_utils.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_item_tile.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_edit_sheet.dart';
+import 'package:homeapp/pages/grocery/widgets/grocery_add_product_sheet.dart';
 
 enum SelectionAction { delete, move, cancel }
+
 enum DetailedListMenuAction { delete }
 
 class GroceryDetailedList extends StatefulWidget {
@@ -14,7 +16,8 @@ class GroceryDetailedList extends StatefulWidget {
   final GroceryRepository repository;
   final VoidCallback onBack;
   final Future<void> Function() onFetchLists;
-  final void Function({required String listId, required String listName}) onDeleteList;
+  final void Function({required String listId, required String listName})
+      onDeleteList;
 
   const GroceryDetailedList({
     super.key,
@@ -30,27 +33,17 @@ class GroceryDetailedList extends StatefulWidget {
 }
 
 class _GroceryDetailedListState extends State<GroceryDetailedList> {
-  final TextEditingController _textController = TextEditingController();
   bool _selectionMode = false;
   final Set<String> _selectedItemIds = <String>{};
 
   @override
   void dispose() {
-    _textController.dispose();
     super.dispose();
   }
 
   String get _locale {
     final languageCode = Localizations.localeOf(context).languageCode;
     return languageCode.isNotEmpty ? languageCode : 'en';
-  }
-
-  Future<void> _addItem() async {
-    final name = _textController.text.trim();
-    if (name.isEmpty) return;
-
-    _textController.clear();
-    await widget.repository.addItem(name, locale: _locale);
   }
 
   Future<void> _toggleItem(GroceryItem item) async {
@@ -199,7 +192,8 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
               ),
               ...candidateLists.map((list) {
                 final id = list['id']?.toString() ?? '';
-                final name = list['name']?.toString() ?? l10n.groceryDefaultListName;
+                final name =
+                    list['name']?.toString() ?? l10n.groceryDefaultListName;
                 return ListTile(
                   leading: const Icon(Icons.list_alt_outlined),
                   title: Text(name),
@@ -222,7 +216,8 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // Let the sheet set its own background
+      backgroundColor:
+          Colors.transparent, // Let the sheet set its own background
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -262,11 +257,12 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final listName = widget.lists
-        .firstWhere(
-          (list) => list['id']?.toString() == widget.repository.listId,
-          orElse: () => <String, dynamic>{'name': l10n.groceryDefaultListName},
-        )['name']
-        ?.toString() ??
+            .firstWhere(
+              (list) => list['id']?.toString() == widget.repository.listId,
+              orElse: () =>
+                  <String, dynamic>{'name': l10n.groceryDefaultListName},
+            )['name']
+            ?.toString() ??
         l10n.groceryDefaultListName;
 
     return Scaffold(
@@ -280,7 +276,8 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
         ),
         title: _selectionMode
             ? Text(l10n.groceryItemsSelected(_selectedItemIds.length))
-            : Text(listName, style: const TextStyle(fontWeight: FontWeight.bold)),
+            : Text(listName,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           if (_selectionMode)
             IconButton(
@@ -298,7 +295,8 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                 if (action == DetailedListMenuAction.delete) {
                   final currentListId = widget.repository.listId;
                   if (currentListId == null) return;
-                  widget.onDeleteList(listId: currentListId, listName: listName);
+                  widget.onDeleteList(
+                      listId: currentListId, listName: listName);
                 }
               },
               itemBuilder: (context) => [
@@ -326,13 +324,16 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
           }
 
           final allItems = widget.repository.items;
-          final toBuyItems = allItems.where((item) => !item.isBought).toList(growable: false);
-          final boughtItems = allItems.where((item) => item.isBought).toList(growable: false);
+          final toBuyItems =
+              allItems.where((item) => !item.isBought).toList(growable: false);
+          final boughtItems =
+              allItems.where((item) => item.isBought).toList(growable: false);
           final groupedToBuy = _groupItems(toBuyItems);
 
           return Column(
             children: [
-              if (widget.repository.isSyncing) const LinearProgressIndicator(minHeight: 2),
+              if (widget.repository.isSyncing)
+                const LinearProgressIndicator(minHeight: 2),
               Expanded(
                 child: CustomScrollView(
                   slivers: [
@@ -355,9 +356,14 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                             padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
                             sliver: SliverToBoxAdapter(
                               child: Text(
-                                CategoryUtils.localizedCategoryName(context, categoryKey),
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary,
+                                CategoryUtils.localizedCategoryName(
+                                    context, categoryKey),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.5,
                                     ),
@@ -369,25 +375,26 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                               (context, index) {
                                 final item = items[index];
                                 return GroceryItemTile(
-                                    item: item,
-                                    isBought: false,
-                                    isSelected: _selectedItemIds.contains(item.id),
-                                    selectionMode: _selectionMode,
-                                    onToggle: _toggleItem,
-                                    onDelete: _deleteItem,
-                                    onLongPress: _startSelection,
-                                    onTap: (selectedItem) {
-                                      if (_selectionMode) {
-                                        _toggleSelection(selectedItem);
-                                        return;
-                                      }
-                                      _showEditModal(selectedItem);
-                                    },
-                                  );
-                                },
-                                childCount: items.length,
-                              ),
+                                  item: item,
+                                  isBought: false,
+                                  isSelected:
+                                      _selectedItemIds.contains(item.id),
+                                  selectionMode: _selectionMode,
+                                  onToggle: _toggleItem,
+                                  onDelete: _deleteItem,
+                                  onLongPress: _startSelection,
+                                  onTap: (selectedItem) {
+                                    if (_selectionMode) {
+                                      _toggleSelection(selectedItem);
+                                      return;
+                                    }
+                                    _showEditModal(selectedItem);
+                                  },
+                                );
+                              },
+                              childCount: items.length,
                             ),
+                          ),
                         ],
                       );
                     }),
@@ -397,10 +404,14 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                         sliver: SliverToBoxAdapter(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -409,7 +420,9 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                     Text(
                                       '(${boughtItems.length}) ${l10n.groceryBoughtItems}', // E.g. (2) Bought Items
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
                                       ),
@@ -417,7 +430,9 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                     const SizedBox(width: 4),
                                     Icon(
                                       Icons.keyboard_arrow_down,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       size: 18,
                                     ),
                                   ],
@@ -426,7 +441,9 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                   onTap: () => _deleteBoughtItems(boughtItems),
                                   child: Icon(
                                     Icons.delete_outline,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     size: 20,
                                   ),
                                 ),
@@ -438,81 +455,50 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                       SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                              final item = boughtItems[index];
-                              return GroceryItemTile(
-                                item: item,
-                                isBought: true,
-                                isSelected: _selectedItemIds.contains(item.id),
-                                selectionMode: _selectionMode,
-                                onToggle: _toggleItem,
-                                onDelete: _deleteItem,
-                                onLongPress: _startSelection,
-                                onTap: (selectedItem) {
-                                  if (_selectionMode) {
-                                    _toggleSelection(selectedItem);
-                                    return;
-                                  }
-                                  _showEditModal(selectedItem);
-                                },
-                              );
-                            },
-                            childCount: boughtItems.length,
-                          ),
+                            final item = boughtItems[index];
+                            return GroceryItemTile(
+                              item: item,
+                              isBought: true,
+                              isSelected: _selectedItemIds.contains(item.id),
+                              selectionMode: _selectionMode,
+                              onToggle: _toggleItem,
+                              onDelete: _deleteItem,
+                              onLongPress: _startSelection,
+                              onTap: (selectedItem) {
+                                if (_selectionMode) {
+                                  _toggleSelection(selectedItem);
+                                  return;
+                                }
+                                _showEditModal(selectedItem);
+                              },
+                            );
+                          },
+                          childCount: boughtItems.length,
                         ),
+                      ),
                     ],
                     const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
                   ],
                 ),
               ),
-              SafeArea(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        offset: const Offset(0, -4),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: TextField(
-                            controller: _textController,
-                            decoration: InputDecoration(
-                              hintText: l10n.groceryAddItem,
-                              border: InputBorder.none,
-                              prefixIcon: Icon(Icons.add, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            ),
-                            onSubmitted: (_) => _addItem(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_upward, color: Colors.white),
-                          onPressed: _addItem,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (context) => GroceryAddProductSheet(
+              repository: widget.repository,
+              locale: _locale,
+            ),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: Text(l10n.groceryAddProduct),
       ),
     );
   }

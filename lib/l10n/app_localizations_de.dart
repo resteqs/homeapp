@@ -74,6 +74,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groceryAddItem => 'Element hinzufügen...';
 
   @override
+  String get groceryAddProduct => 'Produkt hinzufügen';
+
+  @override
   String get groceryAdd => 'HINZUFÜGEN';
 
   @override
