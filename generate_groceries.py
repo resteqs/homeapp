@@ -721,7 +721,16 @@ def _build_brand_products():
         ),
         (
             "dairy_eggs",
-            ["Müller", "Ehrmann", "Danone", "Zott", "Weihenstephan", "Alpro", "MinusL", "Arla"],
+            [
+                "Müller",
+                "Ehrmann",
+                "Danone",
+                "Zott",
+                "Weihenstephan",
+                "Alpro",
+                "MinusL",
+                "Arla",
+            ],
             [
                 ("Yogurt", "Joghurt"),
                 ("Strawberry Yogurt", "Erdbeerjoghurt"),
@@ -760,7 +769,16 @@ def _build_brand_products():
         ),
         (
             "dry_goods",
-            ["Barilla", "Birkel", "Knorr", "Maggi", "Ben's Original", "Müller's Mühle", "KoRo", "Alnatura"],
+            [
+                "Barilla",
+                "Birkel",
+                "Knorr",
+                "Maggi",
+                "Ben's Original",
+                "Müller's Mühle",
+                "KoRo",
+                "Alnatura",
+            ],
             [
                 ("Spaghetti", "Spaghetti"),
                 ("Penne", "Penne"),
@@ -776,7 +794,16 @@ def _build_brand_products():
         ),
         (
             "condiments_spices",
-            ["Thomy", "Hela", "Kühne", "Hengstenberg", "Develey", "Heinz", "Kikkoman", "Byodo"],
+            [
+                "Thomy",
+                "Hela",
+                "Kühne",
+                "Hengstenberg",
+                "Develey",
+                "Heinz",
+                "Kikkoman",
+                "Byodo",
+            ],
             [
                 ("Ketchup", "Ketchup"),
                 ("Mustard", "Senf"),
@@ -820,7 +847,14 @@ def _build_brand_products():
         ),
         (
             "meat",
-            ["Rügenwalder", "Wilhelm Brandenburg", "Herta", "Gutfried", "Wiesenhof", "Block House"],
+            [
+                "Rügenwalder",
+                "Wilhelm Brandenburg",
+                "Herta",
+                "Gutfried",
+                "Wiesenhof",
+                "Block House",
+            ],
             [
                 ("Salami", "Salami"),
                 ("Ham", "Schinken"),
@@ -970,7 +1004,9 @@ STEM_PRODUCTS = [
 ]
 
 
-PRODUCTS = BASE_PRODUCTS + _build_brand_products() + MANUAL_BRAND_ALIASES + STEM_PRODUCTS
+PRODUCTS = (
+    BASE_PRODUCTS + _build_brand_products() + MANUAL_BRAND_ALIASES + STEM_PRODUCTS
+)
 if __name__ == "__main__":
     print(f"Categories: {len(CATEGORIES)}")
     print(f"Products: {len(PRODUCTS)}")

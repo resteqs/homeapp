@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 
 class CategoryVisual {
-  const CategoryVisual(this.icon, this.color);
+  const CategoryVisual(this.icon, this.color, {this.viewportSize = 18});
 
   final IconData icon;
   final Color color;
+  final double viewportSize;
 }
 
 /// Helpers for mapping raw category labels to app category keys, localized
@@ -348,69 +350,82 @@ class CategoryUtils {
   static CategoryVisual getCategoryVisual(String categoryKey) {
     switch (categoryKey) {
       case 'fruits_vegetables':
-        return const CategoryVisual(Icons.eco, AppCategoryColors.produce);
+        return const CategoryVisual(
+          FontAwesomeIcons.carrot,
+          Color.fromARGB(255, 255, 133, 12),
+          viewportSize: 21,
+        );
       case 'meat':
-        return const CategoryVisual(Icons.set_meal, AppCategoryColors.meat);
+        return const CategoryVisual(FontAwesomeIcons.bacon, AppCategoryColors.meat);
       case 'fish':
-        return const CategoryVisual(Icons.set_meal, AppCategoryColors.fish);
+        return const CategoryVisual(FontAwesomeIcons.fish, AppCategoryColors.fish);
       case 'dairy_eggs':
         return const CategoryVisual(
-            Icons.egg_outlined, AppCategoryColors.dairy);
+          FontAwesomeIcons.cow,
+          Color.fromARGB(255, 111, 183, 177),
+          viewportSize: 21,
+        );
       case 'bakery':
         return const CategoryVisual(
-            Icons.bakery_dining, AppCategoryColors.bakery);
+            FontAwesomeIcons.breadSlice, AppCategoryColors.bakery);
       case 'baking_ingredients':
-        return const CategoryVisual(Icons.cake, AppCategoryColors.bakingIngredients);
+        return const CategoryVisual(FontAwesomeIcons.cakeCandles, Color.fromARGB(255, 125, 54, 13));
       case 'dry_goods':
-        return const CategoryVisual(Icons.grain, AppCategoryColors.dryGoods);
+        return const CategoryVisual(FontAwesomeIcons.bowlRice, Color.fromARGB(255, 140, 141, 99));
       case 'canned_goods':
         return const CategoryVisual(
-            Icons.inventory_2, AppCategoryColors.cannedGoods);
+            FontAwesomeIcons.jar, Color.fromARGB(255, 118, 76, 137));
       case 'frozen_foods':
         return const CategoryVisual(
-            Icons.ac_unit, AppCategoryColors.frozenFoods);
+            FontAwesomeIcons.snowflake, AppCategoryColors.frozenFoods);
       case 'beverages':
         return const CategoryVisual(
-            Icons.water_drop, AppCategoryColors.beverages);
+            FontAwesomeIcons.bottleWater, Color.fromARGB(255, 29, 116, 255));
       case 'coffee_tea':
         return const CategoryVisual(
-            Icons.coffee, AppCategoryColors.coffeeTea);
+          FontAwesomeIcons.mugHot,
+          Color.fromARGB(255, 105, 87, 82),
+          viewportSize: 19,
+        );
       case 'snacks_sweets':
-        return const CategoryVisual(Icons.cookie, AppCategoryColors.snacks);
+        return const CategoryVisual(FontAwesomeIcons.cookieBite, AppCategoryColors.snacks);
       case 'condiments_spices':
         return const CategoryVisual(
-            Icons.restaurant, AppCategoryColors.condiments);
+            FontAwesomeIcons.pepperHot, Color.fromARGB(255, 255, 0, 0));
       case 'health':
         return const CategoryVisual(
-            Icons.medical_services, AppCategoryColors.health);
+            FontAwesomeIcons.briefcaseMedical, Color.fromARGB(255, 246, 52, 52));
       case 'cosmetics_hygiene':
-        return const CategoryVisual(Icons.spa, AppCategoryColors.cosmetics);
+        return const CategoryVisual(FontAwesomeIcons.faceKiss, Color.fromARGB(255, 255, 18, 204));
       case 'cleaning_laundry':
         return const CategoryVisual(
-            Icons.local_laundry_service, AppCategoryColors.cleaning);
+            FontAwesomeIcons.jugDetergent, AppCategoryColors.cleaning);
       case 'home_garden':
-        return const CategoryVisual(Icons.home, AppCategoryColors.homeGarden);
+        return const CategoryVisual(FontAwesomeIcons.house, AppCategoryColors.homeGarden);
       case 'electronics':
         return const CategoryVisual(
-            Icons.electrical_services, AppCategoryColors.electronics);
+            FontAwesomeIcons.bolt, Color.fromARGB(255, 207, 207, 9));
       case 'baby':
         return const CategoryVisual(
-            Icons.child_care, AppCategoryColors.baby);
+            FontAwesomeIcons.babyCarriage, AppCategoryColors.baby);
       case 'pets':
-        return const CategoryVisual(Icons.pets, AppCategoryColors.pets);
+        return const CategoryVisual(FontAwesomeIcons.paw, AppCategoryColors.pets);
       case 'ready_meals':
         return const CategoryVisual(
-            Icons.lunch_dining, AppCategoryColors.readyMeals);
+            FontAwesomeIcons.burger, AppCategoryColors.readyMeals);
       case 'alcohol':
         return const CategoryVisual(
-            Icons.local_bar, AppCategoryColors.alcohol);
+            FontAwesomeIcons.martiniGlass, AppCategoryColors.alcohol);
       case 'clothing':
         return const CategoryVisual(
-            Icons.checkroom, AppCategoryColors.clothing);
+          FontAwesomeIcons.shirt,
+          AppCategoryColors.clothing,
+          viewportSize: 19,
+        );
       case 'stationery':
-        return const CategoryVisual(Icons.edit, AppCategoryColors.stationery);
+        return const CategoryVisual(FontAwesomeIcons.pen, Color.fromARGB(255, 173, 168, 43));
       default:
-        return const CategoryVisual(Icons.category, AppCategoryColors.other);
+        return const CategoryVisual(FontAwesomeIcons.shapes, AppCategoryColors.other);
     }
   }
 }

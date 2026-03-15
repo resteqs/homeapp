@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/models/grocery_item.dart';
 import 'package:homeapp/utils/category_utils.dart';
@@ -89,29 +90,36 @@ class GroceryItemTile extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           leading: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () => onToggle(item),
-            child: Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isBought
-                    ? Theme.of(context).colorScheme.primary
-                    : AppColors.transparent,
-                border: Border.all(
-                  color: isBought
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline,
-                  width: 2,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Center(
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isBought
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.transparent,
+                    border: Border.all(
+                      color: isBought
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outline,
+                      width: 2,
+                    ),
+                  ),
+                  child: isBought
+                      ? Icon(
+                          Icons.check,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        )
+                      : null,
                 ),
               ),
-              child: isBought
-                  ? Icon(
-                      Icons.check,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    )
-                  : null,
             ),
           ),
           title: Text(
@@ -143,19 +151,30 @@ class GroceryItemTile extends StatelessWidget {
                   (item.unit != null && item.unit!.trim().isNotEmpty))
                 const SizedBox(width: 12),
               CircleAvatar(
-                radius: 14,
+                radius: 16,
                 backgroundColor: isBought
                     ? Theme.of(context)
                         .colorScheme
                         .surfaceContainerHighest
                         .withValues(alpha: 0.5)
-                    : categoryVisual.color.withValues(alpha: 0.15),
-                child: Icon(
-                  categoryVisual.icon,
-                  size: 16,
-                  color: isBought
-                      ? Theme.of(context).colorScheme.outline
-                      : categoryVisual.color,
+                    : categoryVisual.color.withValues(alpha: 0.24),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Center(
+                    child: SizedBox.square(
+                      dimension: categoryVisual.viewportSize,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: FaIcon(
+                          categoryVisual.icon,
+                          size: 22,
+                          color: isBought
+                              ? Theme.of(context).colorScheme.outline
+                              : categoryVisual.color,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

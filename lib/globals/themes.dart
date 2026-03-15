@@ -43,31 +43,31 @@ abstract final class AppColors {
 
 /// Centralized category colors so category visuals never hardcode values.
 abstract final class AppCategoryColors {
-  static const Color produce = AppColors.greenMain;
-  static const Color meat = AppColors.greenDark;
-  static const Color fish = AppColors.greenLight;
-  static const Color dairy = AppColors.greenLight;
-  static const Color bakery = AppColors.greenDark;
-  static const Color bakingIngredients = AppColors.greenDark;
-  static const Color dryGoods = AppColors.greenMain;
-  static const Color cannedGoods = AppColors.greenMain;
-  static const Color frozenFoods = AppColors.greenLight;
-  static const Color beverages = AppColors.greenMain;
-  static const Color coffeeTea = AppColors.greenDark;
-  static const Color snacks = AppColors.greenMain;
-  static const Color condiments = AppColors.greenDark;
-  static const Color health = AppColors.greenLight;
-  static const Color cosmetics = AppColors.greenLight;
-  static const Color cleaning = AppColors.greenDark;
-  static const Color homeGarden = AppColors.greenMain;
-  static const Color electronics = AppColors.gray700;
-  static const Color baby = AppColors.greenLight;
-  static const Color pets = AppColors.greenMain;
-  static const Color readyMeals = AppColors.greenMain;
-  static const Color alcohol = AppColors.greenDark;
-  static const Color clothing = AppColors.gray700;
-  static const Color stationery = AppColors.gray700;
-  static const Color other = AppColors.gray700;
+  static const Color produce = Color(0xFF2E7D32);
+  static const Color meat = Color(0xFFC62828);
+  static const Color fish = Color(0xFF1565C0);
+  static const Color dairy = Color(0xFF0D9488);
+  static const Color bakery = Color(0xFFB45309);
+  static const Color bakingIngredients = Color(0xFFEA580C);
+  static const Color dryGoods = Color(0xFF8D6E63);
+  static const Color cannedGoods = Color(0xFF475569);
+  static const Color frozenFoods = Color(0xFF0EA5E9);
+  static const Color beverages = Color(0xFF0284C7);
+  static const Color coffeeTea = Color(0xFF6D4C41);
+  static const Color snacks = Color(0xFFD97706);
+  static const Color condiments = Color(0xFFEF4444);
+  static const Color health = Color(0xFF16A34A);
+  static const Color cosmetics = Color(0xFFDB2777);
+  static const Color cleaning = Color(0xFF06B6D4);
+  static const Color homeGarden = Color(0xFF65A30D);
+  static const Color electronics = Color(0xFF4F46E5);
+  static const Color baby = Color(0xFFEC4899);
+  static const Color pets = Color(0xFF7C3AED);
+  static const Color readyMeals = Color(0xFFFB7185);
+  static const Color alcohol = Color(0xFF9333EA);
+  static const Color clothing = Color(0xFF0EA5A4);
+  static const Color stationery = Color(0xFF0369A1);
+  static const Color other = Color(0xFF64748B);
 }
 
 ThemeData _buildLightTheme() {
@@ -99,7 +99,7 @@ ThemeData _buildLightTheme() {
     inverseSurface: AppColors.white,
     onInverseSurface: AppColors.black,
     inversePrimary: AppColors.blueMain,
-    surfaceTint: AppColors.accent,
+    surfaceTint: AppColors.greenLight,
     surfaceContainerLowest: AppColors.white,
     surfaceContainerLow: AppColors.white,
     surfaceContainer: AppColors.gray100,

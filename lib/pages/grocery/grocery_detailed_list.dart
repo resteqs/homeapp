@@ -3,7 +3,6 @@ import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/models/grocery_item.dart';
 import 'package:homeapp/data/grocery_repository.dart';
-import 'package:homeapp/utils/category_utils.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_item_tile.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_edit_sheet.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_add_product_sheet.dart';
@@ -246,15 +245,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     );
   }
 
-  Map<String, List<GroceryItem>> _groupItems(List<GroceryItem> items) {
-    final grouped = <String, List<GroceryItem>>{};
-    for (final item in items) {
-      final key = CategoryUtils.categoryKeyFromRaw(item.category);
-      grouped.putIfAbsent(key, () => <GroceryItem>[]).add(item);
-    }
-    return grouped;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -330,7 +320,6 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
               allItems.where((item) => !item.isBought).toList(growable: false);
           final boughtItems =
               allItems.where((item) => item.isBought).toList(growable: false);
-          final groupedToBuy = _groupItems(toBuyItems);
 
           return Column(
             children: [
@@ -339,7 +328,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
               Expanded(
                 child: CustomScrollView(
                   slivers: [
-                    if (groupedToBuy.isEmpty && boughtItems.isEmpty)
+                    if (toBuyItems.isEmpty && boughtItems.isEmpty)
                       SliverFillRemaining(
                         child: Center(
                           child: Text(
@@ -348,58 +337,31 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                           ),
                         ),
                       ),
-                    ...groupedToBuy.entries.map((entry) {
-                      final categoryKey = entry.key;
-                      final items = entry.value;
-
-                      return SliverMainAxisGroup(
-                        slivers: [
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 4),
-                            sliver: SliverToBoxAdapter(
-                              child: Text(
-                                CategoryUtils.localizedCategoryName(
-                                    context, categoryKey),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                              ),
-                            ),
-                          ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final item = items[index];
-                                return GroceryItemTile(
-                                  item: item,
-                                  isBought: false,
-                                  isSelected:
-                                      _selectedItemIds.contains(item.id),
-                                  selectionMode: _selectionMode,
-                                  onToggle: _toggleItem,
-                                  onDelete: _deleteItem,
-                                  onLongPress: _startSelection,
-                                  onTap: (selectedItem) {
-                                    if (_selectionMode) {
-                                      _toggleSelection(selectedItem);
-                                      return;
-                                    }
-                                    _showEditModal(selectedItem);
-                                  },
-                                );
+                    if (toBuyItems.isNotEmpty)
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = toBuyItems[index];
+                            return GroceryItemTile(
+                              item: item,
+                              isBought: false,
+                              isSelected: _selectedItemIds.contains(item.id),
+                              selectionMode: _selectionMode,
+                              onToggle: _toggleItem,
+                              onDelete: _deleteItem,
+                              onLongPress: _startSelection,
+                              onTap: (selectedItem) {
+                                if (_selectionMode) {
+                                  _toggleSelection(selectedItem);
+                                  return;
+                                }
+                                _showEditModal(selectedItem);
                               },
-                              childCount: items.length,
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
+                            );
+                          },
+                          childCount: toBuyItems.length,
+                        ),
+                      ),
                     if (boughtItems.isNotEmpty) ...[
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
