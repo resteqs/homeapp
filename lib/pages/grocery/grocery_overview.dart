@@ -98,8 +98,8 @@ class GroceryOverview extends StatelessWidget {
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C759)),
+                                        backgroundColor: const Color(0xFFE0E0E0),
+                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                                       ),
                                     ),
                                   ),

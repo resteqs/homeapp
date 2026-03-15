@@ -87,9 +87,9 @@ class GroceryItemTile extends StatelessWidget {
               height: 26,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isBought ? const Color(0xFF34C759) : Colors.transparent,
+                color: isBought ? Theme.of(context).colorScheme.primary : Colors.transparent,
                 border: Border.all(
-                  color: isBought ? const Color(0xFF34C759) : const Color(0xFF4A90E2),
+                  color: isBought ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
                   width: 2,
                 ),
               ),

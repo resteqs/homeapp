@@ -490,7 +490,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                             decoration: InputDecoration(
                               hintText: l10n.groceryAddItem,
                               border: InputBorder.none,
-                              prefixIcon: const Icon(Icons.add, color: Colors.grey),
+                              prefixIcon: Icon(Icons.add, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
                             onSubmitted: (_) => _addItem(),
@@ -500,7 +500,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                       const SizedBox(width: 12),
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: Colors.green,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         child: IconButton(
                           icon: const Icon(Icons.arrow_upward, color: Colors.white),
                           onPressed: _addItem,

@@ -98,7 +98,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     // Colors based on light theme
     const bgColor = Colors.white;
     const surfaceColor = Color(0xFFF2F2F7); // Light gray
-    const accentGreen = Color(0xFF34C759); // Green
+    final accentGreen = Theme.of(context).colorScheme.primary; // Green
     const textColor = Colors.black87;
     const secondaryTextColor = Colors.black54;
 
@@ -146,7 +146,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       onPressed: _save,
                       child: const Text('Speichern',
                           style: TextStyle(
-                              color: accentGreen,
+                              color: Colors.black,
                               fontSize: 16,
                               fontWeight: FontWeight.bold)),
                     ),
@@ -178,7 +178,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           ),
                         ),
                         const Icon(Icons.back_hand,
-                            color: Color(0xFFFFD54F),
+                            color: Color(0xFF609966),
                             size: 20), // Yellow pointing hand approximation
                       ],
                     ),
@@ -256,7 +256,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.add, color: Colors.black),
+                          icon: const Icon(Icons.add, color: Colors.white),
                           onPressed: () {
                             setState(() {
                               _quantity++;
@@ -396,13 +396,12 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(
-                              0xFFFFEBEE), // Light red tinted background
+                          color: Theme.of(context).colorScheme.errorContainer, // Light red tinted background
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.red),
+                          icon: Icon(Icons.delete_outline,
+                              color: Theme.of(context).colorScheme.error),
                           onPressed: () {
                             widget.onDelete(widget.item);
                             Navigator.of(context).pop();

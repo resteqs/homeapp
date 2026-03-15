@@ -94,21 +94,21 @@ class CategoryUtils {
   static CategoryVisual getCategoryVisual(String categoryKey) {
     switch (categoryKey) {
       case 'produce':
-        return const CategoryVisual(Icons.eco, Color(0xFF3A9D23));
+        return const CategoryVisual(Icons.eco, Color(0xFF609966));
       case 'dairy':
-        return const CategoryVisual(Icons.local_drink, Color(0xFF2A76D2));
+        return const CategoryVisual(Icons.local_drink, Color(0xFF9DC08B));
       case 'bakery':
-        return const CategoryVisual(Icons.bakery_dining, Color(0xFFD18B2A));
+        return const CategoryVisual(Icons.bakery_dining, Color(0xFF40513B));
       case 'drinks':
-        return const CategoryVisual(Icons.water_drop, Color(0xFF1C9CEB));
+        return const CategoryVisual(Icons.water_drop, Color(0xFF9DC08B));
       case 'snacks':
-        return const CategoryVisual(Icons.cookie, Color(0xFFE07D26));
+        return const CategoryVisual(Icons.cookie, Color(0xFF609966));
       case 'care':
-        return const CategoryVisual(Icons.clean_hands, Color(0xFF8E57D6));
+        return const CategoryVisual(Icons.clean_hands, Color(0xFF40513B));
       case 'meat':
-        return const CategoryVisual(Icons.set_meal, Color(0xFFDB4A39));
+        return const CategoryVisual(Icons.set_meal, Color(0xFF609966));
       default:
-        return const CategoryVisual(Icons.category, Color(0xFF5F6D7A));
+        return const CategoryVisual(Icons.category, Color(0xFF9DC08B));
     }
   }
 }
