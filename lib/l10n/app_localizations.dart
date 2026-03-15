@@ -380,17 +380,23 @@ abstract class AppLocalizations {
   /// **'Delete all'**
   String get groceryDeleteAll;
 
-  /// No description provided for @groceryCategoryProduce.
+  /// No description provided for @groceryCategoryAlcohol.
   ///
   /// In en, this message translates to:
-  /// **'Fruits & Vegetables'**
-  String get groceryCategoryProduce;
+  /// **'Alcohol'**
+  String get groceryCategoryAlcohol;
 
-  /// No description provided for @groceryCategoryDairy.
+  /// No description provided for @groceryCategoryBaby.
   ///
   /// In en, this message translates to:
-  /// **'Dairy'**
-  String get groceryCategoryDairy;
+  /// **'Baby'**
+  String get groceryCategoryBaby;
+
+  /// No description provided for @groceryCategoryBakingIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Baking Ingredients'**
+  String get groceryCategoryBakingIngredients;
 
   /// No description provided for @groceryCategoryBakery.
   ///
@@ -398,11 +404,107 @@ abstract class AppLocalizations {
   /// **'Bakery'**
   String get groceryCategoryBakery;
 
-  /// No description provided for @groceryCategoryDrinks.
+  /// No description provided for @groceryCategoryCannedGoods.
   ///
   /// In en, this message translates to:
-  /// **'Drinks'**
-  String get groceryCategoryDrinks;
+  /// **'Canned & Jarred Goods'**
+  String get groceryCategoryCannedGoods;
+
+  /// No description provided for @groceryCategoryElectronics.
+  ///
+  /// In en, this message translates to:
+  /// **'Electronics'**
+  String get groceryCategoryElectronics;
+
+  /// No description provided for @groceryCategoryReadyMeals.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready Meals'**
+  String get groceryCategoryReadyMeals;
+
+  /// No description provided for @groceryCategoryFish.
+  ///
+  /// In en, this message translates to:
+  /// **'Fish & Seafood'**
+  String get groceryCategoryFish;
+
+  /// No description provided for @groceryCategoryMeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Meat'**
+  String get groceryCategoryMeat;
+
+  /// No description provided for @groceryCategoryHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get groceryCategoryHealth;
+
+  /// No description provided for @groceryCategoryBeverages.
+  ///
+  /// In en, this message translates to:
+  /// **'Beverages'**
+  String get groceryCategoryBeverages;
+
+  /// No description provided for @groceryCategoryCondiments.
+  ///
+  /// In en, this message translates to:
+  /// **'Condiments, Sauces & Oils'**
+  String get groceryCategoryCondiments;
+
+  /// No description provided for @groceryCategoryHomeGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'Home & Garden'**
+  String get groceryCategoryHomeGarden;
+
+  /// No description provided for @groceryCategoryPets.
+  ///
+  /// In en, this message translates to:
+  /// **'Pets'**
+  String get groceryCategoryPets;
+
+  /// No description provided for @groceryCategoryCoffeeTea.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee & Tea'**
+  String get groceryCategoryCoffeeTea;
+
+  /// No description provided for @groceryCategoryClothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothing'**
+  String get groceryCategoryClothing;
+
+  /// No description provided for @groceryCategoryCosmeticsHygiene.
+  ///
+  /// In en, this message translates to:
+  /// **'Cosmetics & Hygiene'**
+  String get groceryCategoryCosmeticsHygiene;
+
+  /// No description provided for @groceryCategoryDairy.
+  ///
+  /// In en, this message translates to:
+  /// **'Dairy & Eggs'**
+  String get groceryCategoryDairy;
+
+  /// No description provided for @groceryCategoryProduce.
+  ///
+  /// In en, this message translates to:
+  /// **'Fruits & Vegetables'**
+  String get groceryCategoryProduce;
+
+  /// No description provided for @groceryCategoryCleaningLaundry.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning & Laundry'**
+  String get groceryCategoryCleaningLaundry;
+
+  /// No description provided for @groceryCategoryStationery.
+  ///
+  /// In en, this message translates to:
+  /// **'Stationery'**
+  String get groceryCategoryStationery;
 
   /// No description provided for @groceryCategorySnacks.
   ///
@@ -410,23 +512,23 @@ abstract class AppLocalizations {
   /// **'Snacks & Sweets'**
   String get groceryCategorySnacks;
 
-  /// No description provided for @groceryCategoryCare.
-  ///
-  /// In en, this message translates to:
-  /// **'Care & Cleaning'**
-  String get groceryCategoryCare;
-
-  /// No description provided for @groceryCategoryMeat.
-  ///
-  /// In en, this message translates to:
-  /// **'Meat & Fish'**
-  String get groceryCategoryMeat;
-
   /// No description provided for @groceryCategoryOther.
   ///
   /// In en, this message translates to:
   /// **'Other'**
   String get groceryCategoryOther;
+
+  /// No description provided for @groceryCategoryFrozenFoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Frozen Foods'**
+  String get groceryCategoryFrozenFoods;
+
+  /// No description provided for @groceryCategoryDryGoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry Goods'**
+  String get groceryCategoryDryGoods;
 }
 
 class _AppLocalizationsDelegate

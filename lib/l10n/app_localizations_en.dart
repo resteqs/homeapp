@@ -159,26 +159,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groceryDeleteAll => 'Delete all';
 
   @override
-  String get groceryCategoryProduce => 'Fruits & Vegetables';
+  String get groceryCategoryAlcohol => 'Alcohol';
 
   @override
-  String get groceryCategoryDairy => 'Dairy';
+  String get groceryCategoryBaby => 'Baby';
+
+  @override
+  String get groceryCategoryBakingIngredients => 'Baking Ingredients';
 
   @override
   String get groceryCategoryBakery => 'Bakery';
 
   @override
-  String get groceryCategoryDrinks => 'Drinks';
+  String get groceryCategoryCannedGoods => 'Canned & Jarred Goods';
+
+  @override
+  String get groceryCategoryElectronics => 'Electronics';
+
+  @override
+  String get groceryCategoryReadyMeals => 'Ready Meals';
+
+  @override
+  String get groceryCategoryFish => 'Fish & Seafood';
+
+  @override
+  String get groceryCategoryMeat => 'Meat';
+
+  @override
+  String get groceryCategoryHealth => 'Health';
+
+  @override
+  String get groceryCategoryBeverages => 'Beverages';
+
+  @override
+  String get groceryCategoryCondiments => 'Condiments, Sauces & Oils';
+
+  @override
+  String get groceryCategoryHomeGarden => 'Home & Garden';
+
+  @override
+  String get groceryCategoryPets => 'Pets';
+
+  @override
+  String get groceryCategoryCoffeeTea => 'Coffee & Tea';
+
+  @override
+  String get groceryCategoryClothing => 'Clothing';
+
+  @override
+  String get groceryCategoryCosmeticsHygiene => 'Cosmetics & Hygiene';
+
+  @override
+  String get groceryCategoryDairy => 'Dairy & Eggs';
+
+  @override
+  String get groceryCategoryProduce => 'Fruits & Vegetables';
+
+  @override
+  String get groceryCategoryCleaningLaundry => 'Cleaning & Laundry';
+
+  @override
+  String get groceryCategoryStationery => 'Stationery';
 
   @override
   String get groceryCategorySnacks => 'Snacks & Sweets';
 
   @override
-  String get groceryCategoryCare => 'Care & Cleaning';
-
-  @override
-  String get groceryCategoryMeat => 'Meat & Fish';
-
-  @override
   String get groceryCategoryOther => 'Other';
+
+  @override
+  String get groceryCategoryFrozenFoods => 'Frozen Foods';
+
+  @override
+  String get groceryCategoryDryGoods => 'Dry Goods';
 }

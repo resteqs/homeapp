@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homeapp/globals/themes.dart';
 
 import 'package:homeapp/models/grocery_item.dart';
 
@@ -110,12 +111,13 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Colors based on light theme
-    const bgColor = Colors.white;
-    const surfaceColor = Color(0xFFF2F2F7); // Light gray
-    final accentGreen = Theme.of(context).colorScheme.primary; // Green
-    const textColor = Colors.black87;
-    const secondaryTextColor = Colors.black54;
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgColor = colorScheme.surface;
+    final surfaceColor = colorScheme.surfaceContainerHighest;
+    final accentGreen = colorScheme.primary;
+    final textColor = colorScheme.onSurface;
+    final secondaryTextColor = colorScheme.onSurfaceVariant;
+    final subtleBorderColor = colorScheme.outlineVariant.withValues(alpha: 0.6);
 
     return DraggableScrollableSheet(
       controller: _sheetController,
@@ -147,7 +149,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: subtleBorderColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -159,11 +161,14 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: _save,
-                      child: const Text('Speichern',
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Speichern',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -181,19 +186,19 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           child: TextField(
                             controller: _nameController,
                             focusNode: _nameNode,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: textColor,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold),
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Artikelname',
                               hintStyle: TextStyle(color: secondaryTextColor),
                             ),
                           ),
                         ),
-                        const Icon(Icons.back_hand,
-                            color: Color(0xFF609966),
+                        Icon(Icons.back_hand,
+                            color: accentGreen,
                             size: 20), // Yellow pointing hand approximation
                       ],
                     ),
@@ -213,8 +218,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           child: TextField(
                             controller: _quantityController,
                             focusNode: _quantityNode,
-                            style: const TextStyle(color: textColor),
-                            decoration: const InputDecoration(
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Menge',
                               hintStyle: TextStyle(color: secondaryTextColor),
@@ -237,8 +242,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           child: TextField(
                             controller: _unitController,
                             focusNode: _unitNode,
-                            style: const TextStyle(color: textColor),
-                            decoration: const InputDecoration(
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Einheit',
                               hintStyle: TextStyle(color: secondaryTextColor),
@@ -253,7 +258,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.remove, color: textColor),
+                          icon: Icon(Icons.remove, color: textColor),
                           onPressed: _quantity > 1
                               ? () {
                                   setState(() {
@@ -272,7 +277,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.add, color: Colors.white),
+                          icon: Icon(Icons.add, color: colorScheme.onPrimary),
                           onPressed: () {
                             setState(() {
                               _quantity++;
@@ -286,7 +291,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                   const SizedBox(height: 24),
 
                   // Mehr Optionen
-                  const Text(
+                  Text(
                     'MEHR OPTIONEN',
                     style: TextStyle(
                         color: secondaryTextColor,
@@ -309,19 +314,18 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Notiz',
+                            Text('Notiz',
                                 style: TextStyle(
                                     color: secondaryTextColor, fontSize: 12)),
                             const Spacer(),
-                            const Icon(Icons.cancel,
+                            Icon(Icons.cancel,
                                 color: secondaryTextColor, size: 16),
                           ],
                         ),
                         TextField(
                           controller: _noteController,
                           focusNode: _noteNode,
-                          style:
-                              const TextStyle(color: textColor, fontSize: 14),
+                          style: TextStyle(color: textColor, fontSize: 14),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
@@ -366,13 +370,13 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Preis',
+                              Text('Preis',
                                   style: TextStyle(
                                       color: secondaryTextColor, fontSize: 12)),
                               TextField(
                                 controller: _priceController,
                                 focusNode: _priceNode,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: textColor,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500),
@@ -390,11 +394,11 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text('Gesamt',
                                 style: TextStyle(
                                     color: secondaryTextColor, fontSize: 12)),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text('-',
                                 style: TextStyle(
                                     color: textColor,
@@ -431,7 +435,7 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accentGreen,
-                            foregroundColor: Colors.black,
+                            foregroundColor: colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -460,15 +464,28 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE5E5EA) : Colors.white,
+          color: isSelected
+              ? Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withValues(alpha: 0.4)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: isSelected ? Colors.transparent : Colors.grey.shade300),
+            color: isSelected
+                ? AppColors.transparent
+                : Theme.of(context)
+                    .colorScheme
+                    .outlineVariant
+                    .withValues(alpha: 0.6),
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black87 : Colors.black54,
+            color: isSelected
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),

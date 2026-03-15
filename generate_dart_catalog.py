@@ -1,9 +1,10 @@
-import re
+import importlib.util
+from pathlib import Path
 
 """Generate an offline Dart grocery catalog from the Python source dataset.
 
 Input:
-- generate_groceries.py (PRODUCTS tuples: category_key, en_name, de_name)
+- generate_groceries.py (computed PRODUCTS tuples: category_key, en_name, de_name)
 
 Output:
 - lib/data/grocery_catalog.dart
@@ -12,20 +13,24 @@ Output:
 """
 
 
+def _load_products():
+    """Load PRODUCTS from generate_groceries.py without brittle text parsing."""
+    src = Path("generate_groceries.py")
+    spec = importlib.util.spec_from_file_location("generate_groceries", src)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Could not load generate_groceries.py")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    products = getattr(module, "PRODUCTS", None)
+    if not isinstance(products, list):
+        raise RuntimeError("generate_groceries.py must expose PRODUCTS as a list")
+    return products
+
+
 def main():
-    # Read source file once and parse PRODUCTS with a regex that matches tuple
-    # entries. This keeps generation deterministic and dependency-free.
-    with open("generate_groceries.py", "r") as f:
-        content = f.read()
-
-    match = re.search(r"PRODUCTS\s*=\s*\[(.*?)\]", content, re.DOTALL)
-    if not match:
-        print("Couldn't find PRODUCTS")
-        return
-
-    products_str = match.group(1)
-
-    pattern = re.compile(r'\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)')
+    products = _load_products()
 
     en_names = set()
     de_names = set()
@@ -33,10 +38,10 @@ def main():
     en_category_by_name = {}
     de_category_by_name = {}
 
-    for m in pattern.finditer(products_str):
-        category_key = m.group(1)
-        en_name = m.group(2)
-        de_name = m.group(3)
+    for entry in products:
+        if len(entry) != 3:
+            continue
+        category_key, en_name, de_name = entry
         en_names.add(en_name)
         de_names.add(de_name)
         en_category_by_name[en_name.lower()] = category_key

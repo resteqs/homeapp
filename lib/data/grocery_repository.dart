@@ -24,9 +24,6 @@ class GroceryRepository extends ChangeNotifier {
   final SupabaseClient _supabase;
   final LocalGroceryStore _localStore;
   final Uuid _uuid = const Uuid();
-  final Map<String, String> _categoryCache = <String, String>{};
-  final Map<String, Future<String>> _categoryLookups =
-      <String, Future<String>>{};
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
@@ -130,77 +127,26 @@ class GroceryRepository extends ChangeNotifier {
     _setItems(_items.where((item) => item.id != itemId).toList());
   }
 
-  String _normalizedCategoryLookupKey(String itemName, String locale) {
-    return '${locale.toLowerCase()}::${itemName.trim().toLowerCase()}';
-  }
-
-  Future<String> _lookupCategoryCached(String itemName,
-      {required String locale}) {
-    final key = _normalizedCategoryLookupKey(itemName, locale);
-    final cached = _categoryCache[key];
-    if (cached != null) {
-      return Future<String>.value(cached);
-    }
-
-    final inFlight = _categoryLookups[key];
-    if (inFlight != null) {
-      return inFlight;
-    }
-
-    final lookup = lookupCategory(itemName, locale: locale).then((resolved) {
-      _categoryCache[key] = resolved;
-      _categoryLookups.remove(key);
-      return resolved;
-    }, onError: (Object error, StackTrace stackTrace) {
-      _categoryLookups.remove(key);
-      throw error;
-    });
-
-    _categoryLookups[key] = lookup;
-    return lookup;
-  }
-
   Future<void> _resolveCategoryInBackground(
     GroceryItem item,
     String name, {
     required String locale,
   }) async {
-    // Resolve from local catalog first to avoid unnecessary remote DB calls.
-    final localCategory = _lookupCategoryFromLocalCatalog(name, locale: locale);
-    if (localCategory != null) {
-      if (localCategory != item.category) {
-        final updated = item.copyWith(
-          category: localCategory,
-          updatedAt: DateTime.now().toUtc(),
-          syncStatus: 'pending_upsert',
-        );
-        await _localStore.upsertItem(updated);
-        _upsertLocalItemInMemory(updated);
-        notifyListeners();
-        _scheduleSync();
-      }
+    final resolvedCategory =
+        _lookupCategoryFromLocalCatalog(name, locale: locale);
+    if (resolvedCategory == null || resolvedCategory == item.category) {
       return;
     }
 
-    try {
-      final resolvedCategory =
-          await _lookupCategoryCached(name, locale: locale);
-      if (resolvedCategory == item.category) {
-        return;
-      }
-
-      final updated = item.copyWith(
-        category: resolvedCategory,
-        updatedAt: DateTime.now().toUtc(),
-        syncStatus: 'pending_upsert',
-      );
-      await _localStore.upsertItem(updated);
-      _upsertLocalItemInMemory(updated);
-      notifyListeners();
-      _scheduleSync();
-    } catch (_) {
-      // Keep the fallback category when remote lookup is unavailable.
-    }
+    final updated = item.copyWith(
+      category: resolvedCategory,
+      updatedAt: DateTime.now().toUtc(),
+      syncStatus: 'pending_upsert',
+    );
+    await _localStore.upsertItem(updated);
+    _upsertLocalItemInMemory(updated);
+    notifyListeners();
+    _scheduleSync();
   }
 
   String? _lookupCategoryFromLocalCatalog(String itemName,
@@ -208,9 +154,12 @@ class GroceryRepository extends ChangeNotifier {
     final normalized = itemName.trim().toLowerCase();
     if (normalized.isEmpty) return null;
 
-    final categoryKey = locale == 'de'
-        ? groceryCategoryKeyByNameLowerDe[normalized]
-        : groceryCategoryKeyByNameLowerEn[normalized];
+    final categoryMap = locale == 'de'
+        ? groceryCategoryKeyByNameLowerDe
+        : groceryCategoryKeyByNameLowerEn;
+
+    var categoryKey = categoryMap[normalized];
+    categoryKey ??= _lookupCategoryKeyBySubword(normalized, categoryMap);
     if (categoryKey == null) return null;
 
     if (locale == 'de') {
@@ -219,22 +168,89 @@ class GroceryRepository extends ChangeNotifier {
     return _enCategoryNameFromKey(categoryKey);
   }
 
+  String? _lookupCategoryKeyBySubword(
+    String normalized,
+    Map<String, String> categoryByName,
+  ) {
+    // Split by separators first, then attempt prefix/suffix matches for
+    // German compounds like "joghurtschokolade" -> "schokolade".
+    final parts = normalized.split(RegExp(r'[^\p{L}\p{N}]+', unicode: true));
+    final tokens = parts.where((part) => part.length >= 4).toList(growable: true);
+    if (tokens.isEmpty && normalized.length >= 4) {
+      tokens.add(normalized);
+    }
+
+    for (final token in tokens) {
+      final exact = categoryByName[token];
+      if (exact != null) return exact;
+
+      if (token.length < 5) continue;
+      for (var i = 1; i <= token.length - 4; i++) {
+        final suffix = token.substring(i);
+        final suffixCategory = categoryByName[suffix];
+        if (suffixCategory != null) return suffixCategory;
+      }
+
+      for (var end = token.length - 1; end >= 4; end--) {
+        final prefix = token.substring(0, end);
+        final prefixCategory = categoryByName[prefix];
+        if (prefixCategory != null) return prefixCategory;
+      }
+    }
+
+    return null;
+  }
+
   String? _enCategoryNameFromKey(String key) {
     switch (key) {
-      case 'fruits_vegetables':
-        return 'Fruits & Vegetables';
-      case 'dairy':
-        return 'Dairy';
+      case 'alcohol':
+        return 'Alcohol';
+      case 'baby':
+        return 'Baby';
+      case 'baking_ingredients':
+        return 'Baking Ingredients';
       case 'bakery':
         return 'Bakery';
-      case 'drinks':
-        return 'Drinks';
+      case 'canned_goods':
+        return 'Canned & Jarred Goods';
+      case 'electronics':
+        return 'Electronics';
+      case 'ready_meals':
+        return 'Ready Meals';
+      case 'fish':
+        return 'Fish & Seafood';
+      case 'meat':
+        return 'Meat';
+      case 'health':
+        return 'Health';
+      case 'beverages':
+        return 'Beverages';
+      case 'condiments_spices':
+        return 'Condiments, Sauces & Oils';
+      case 'home_garden':
+        return 'Home & Garden';
+      case 'pets':
+        return 'Pets';
+      case 'coffee_tea':
+        return 'Coffee & Tea';
+      case 'clothing':
+        return 'Clothing';
+      case 'cosmetics_hygiene':
+        return 'Cosmetics & Hygiene';
+      case 'dairy_eggs':
+        return 'Dairy & Eggs';
+      case 'fruits_vegetables':
+        return 'Fruits & Vegetables';
+      case 'cleaning_laundry':
+        return 'Cleaning & Laundry';
+      case 'stationery':
+        return 'Stationery';
       case 'snacks_sweets':
         return 'Snacks & Sweets';
-      case 'care_cleaning':
-        return 'Care & Cleaning';
-      case 'meat_fish':
-        return 'Meat & Fish';
+      case 'frozen_foods':
+        return 'Frozen Foods';
+      case 'dry_goods':
+        return 'Dry Goods';
       default:
         return null;
     }
@@ -242,20 +258,54 @@ class GroceryRepository extends ChangeNotifier {
 
   String? _deCategoryNameFromKey(String key) {
     switch (key) {
-      case 'fruits_vegetables':
-        return 'Obst & Gemüse';
-      case 'dairy':
-        return 'Milchprodukte';
+      case 'alcohol':
+        return 'Alkohol';
+      case 'baby':
+        return 'Baby';
+      case 'baking_ingredients':
+        return 'Backzutaten';
       case 'bakery':
         return 'Bäckerei';
-      case 'drinks':
+      case 'canned_goods':
+        return 'Dosen und Gläser';
+      case 'electronics':
+        return 'Elektronik';
+      case 'ready_meals':
+        return 'Fertiggerichte';
+      case 'fish':
+        return 'Fisch und Meeresfrüchte';
+      case 'meat':
+        return 'Fleisch';
+      case 'health':
+        return 'Gesundheit';
+      case 'beverages':
         return 'Getränke';
+      case 'condiments_spices':
+        return 'Gewürze, Saucen, Öle';
+      case 'home_garden':
+        return 'Haus und Garten';
+      case 'pets':
+        return 'Haustiere';
+      case 'coffee_tea':
+        return 'Kaffee und Tee';
+      case 'clothing':
+        return 'Kleidung';
+      case 'cosmetics_hygiene':
+        return 'Kosmetik und Hygiene';
+      case 'dairy_eggs':
+        return 'Milchprodukte und Eier';
+      case 'fruits_vegetables':
+        return 'Obst und Gemüse';
+      case 'cleaning_laundry':
+        return 'Reinigung und Wäsche';
+      case 'stationery':
+        return 'Schreibwaren';
       case 'snacks_sweets':
-        return 'Snacks & Süßes';
-      case 'care_cleaning':
-        return 'Pflege & Reinigung';
-      case 'meat_fish':
-        return 'Fleisch & Fisch';
+        return 'Snacks und Süßigkeiten';
+      case 'frozen_foods':
+        return 'Tiefkühlkost';
+      case 'dry_goods':
+        return 'Trockene Waren';
       default:
         return null;
     }
@@ -288,164 +338,138 @@ class GroceryRepository extends ChangeNotifier {
         _remotePullCooldown;
   }
 
-  /// Looks up a category name for [itemName] using [locale] (e.g. 'en', 'de').
-  /// Queries global_items where name_translations->>locale matches, then returns
-  /// the category name in the same locale. Falls back to 'Other' if no match.
-  Future<String> lookupCategory(String itemName, {String locale = 'en'}) async {
-    final normalizedItemName = itemName.trim().toLowerCase();
-    if (normalizedItemName.isEmpty) {
-      return _fallbackCategoryFromItemName(itemName, locale: locale);
-    }
-
-    try {
-      final exactResults = await _supabase
-          .from('global_items')
-          .select('categories!inner(name_translations)')
-          .ilike('name_translations->>$locale', itemName.trim())
-          .limit(1);
-
-      if (exactResults.isNotEmpty) {
-        final catTranslations = exactResults[0]['categories']
-            ['name_translations'] as Map<String, dynamic>?;
-        // Return the localized category name, falling back through en then key.
-        return catTranslations?[locale]?.toString() ??
-            catTranslations?['en']?.toString() ??
-            'Other';
-      }
-
-      final fuzzyResults = await _supabase
-          .from('global_items')
-          .select('categories!inner(name_translations)')
-          .ilike('name_translations->>$locale', '%${itemName.trim()}%')
-          .limit(1);
-
-      if (fuzzyResults.isNotEmpty) {
-        final catTranslations = fuzzyResults[0]['categories']
-            ['name_translations'] as Map<String, dynamic>?;
-        return catTranslations?[locale]?.toString() ??
-            catTranslations?['en']?.toString() ??
-            'Other';
-      }
-    } catch (_) {
-      // If offline or table not ready, fall through to default.
-    }
-    return _fallbackCategoryFromItemName(itemName, locale: locale);
-  }
-
   String _fallbackCategoryFromItemName(String itemName,
       {required String locale}) {
     final text = itemName.trim().toLowerCase();
     if (text.isEmpty) return locale == 'de' ? 'Sonstiges' : 'Other';
 
     const produce = [
-      'apple',
-      'banana',
-      'orange',
-      'tomato',
-      'onion',
-      'carrot',
-      'salad',
-      'obst',
-      'gemu',
-      'kartoffel'
+      'apple', 'banana', 'orange', 'tomato', 'onion', 'carrot', 'salad',
+      'obst', 'gemüse', 'gemu', 'kartoffel', 'fruit', 'vegetable',
+    ];
+    const meat = [
+      'chicken', 'beef', 'pork', 'ham', 'fleisch', 'meat',
+      'huhn', 'rind', 'schwein', 'wurst', 'steak',
+    ];
+    const fish = [
+      'fish', 'salmon', 'tuna', 'shrimp', 'fisch', 'lachs',
+      'garnelen', 'seafood', 'meeresfrüchte',
     ];
     const dairy = [
-      'milk',
-      'cheese',
-      'yogurt',
-      'butter',
-      'egg',
-      'milch',
-      'kaese',
-      'käse',
-      'joghurt',
-      'butter'
+      'milk', 'cheese', 'yogurt', 'butter', 'egg',
+      'milch', 'käse', 'kase', 'joghurt', 'eier',
     ];
     const bakery = [
-      'bread',
-      'bun',
-      'toast',
-      'flour',
-      'cake',
-      'brot',
-      'bröt',
-      'broet',
-      'mehl',
-      'kuchen'
+      'bread', 'bun', 'toast', 'cake', 'brot', 'bröt', 'broet',
+      'kuchen', 'croissant', 'baguette', 'muffin',
     ];
-    const drinks = [
-      'water',
-      'juice',
-      'cola',
-      'soda',
-      'coffee',
-      'tea',
-      'bier',
-      'wein',
-      'saft',
-      'getra',
-      'getränk'
+    const bakingIngredients = [
+      'flour', 'mehl', 'baking powder', 'backpulver', 'natron',
+      'yeast', 'hefe', 'zucker', 'sugar', 'vanilla',
+    ];
+    const dryGoods = [
+      'rice', 'pasta', 'noodle', 'reis', 'nudel', 'lentil', 'linse',
+      'bean', 'bohne', 'oat', 'hafer', 'quinoa', 'couscous',
+    ];
+    const cannedGoods = [
+      'canned', 'aus der dose', 'dosentomaten', 'broth', 'brühe',
+    ];
+    const frozenFoods = [
+      'frozen', 'tiefkühl', 'ice cream', 'eis',
+    ];
+    const beverages = [
+      'water', 'juice', 'cola', 'soda', 'bier', 'wein', 'saft',
+      'getra', 'getränk', 'lemonade', 'limonade',
+    ];
+    const coffeeTea = [
+      'coffee', 'tea', 'kaffee', 'tee', 'espresso', 'kakao',
     ];
     const snacks = [
-      'chips',
-      'cookie',
-      'chocolate',
-      'candy',
-      'snack',
-      'keks',
-      'schoko',
-      'suss',
-      'süß'
+      'chips', 'cookie', 'chocolate', 'candy', 'snack',
+      'keks', 'schoko', 'süß', 'suss', 'gummi',
     ];
-    const hygiene = [
-      'soap',
-      'shampoo',
-      'detergent',
-      'toilet',
-      'clean',
-      'seife',
-      'shampoo',
-      'wasch',
-      'hygiene',
-      'pflege'
+    const condiments = [
+      'sauce', 'ketchup', 'mustard', 'oil', 'vinegar', 'spice',
+      'senf', 'öl', 'ol', 'essig', 'gewürz', 'pfeffer',
     ];
-    const meatFish = [
-      'meat',
-      'chicken',
-      'beef',
-      'fish',
-      'ham',
-      'fleisch',
-      'huhn',
-      'rind',
-      'fisch',
-      'wurst'
+    const health = [
+      'vitamin', 'ibuprofen', 'paracetamol', 'supplement',
+      'bandage', 'pflaster', 'protein powder',
+    ];
+    const cosmetics = [
+      'shampoo', 'soap', 'seife', 'toothpaste', 'zahnpasta',
+      'deodorant', 'moisturizer', 'razor', 'lotion',
+    ];
+    const cleaning = [
+      'detergent', 'waschmittel', 'reiniger', 'cleaner',
+      'bleach', 'bleichmittel', 'spülmittel',
+    ];
+    const baby = [
+      'baby', 'diaper', 'windel', 'formula', 'säugling',
+    ];
+    const pets = [
+      'dog food', 'cat food', 'pet', 'hundefutter', 'katzenfutter',
+      'tierfutter', 'haustier',
+    ];
+    const alcohol = [
+      'beer', 'wine', 'vodka', 'whisky', 'bier', 'wein', 'rum',
+      'gin', 'alkohol', 'spirits',
     ];
 
-    bool hasAny(List<String> keywords) => keywords.any(text.contains);
+    bool hasAny(List<String> kws) => kws.any(text.contains);
 
     if (hasAny(produce)) {
-      return locale == 'de' ? 'Obst & Gemüse' : 'Fruits & Vegetables';
+      return locale == 'de' ? 'Obst und Gemüse' : 'Fruits & Vegetables';
     }
-    if (hasAny(dairy)) return locale == 'de' ? 'Milchprodukte' : 'Dairy';
+    if (hasAny(fish)) {
+      return locale == 'de' ? 'Fisch und Meeresfrüchte' : 'Fish & Seafood';
+    }
+    if (hasAny(meat)) return locale == 'de' ? 'Fleisch' : 'Meat';
+    if (hasAny(dairy)) {
+      return locale == 'de' ? 'Milchprodukte und Eier' : 'Dairy & Eggs';
+    }
+    if (hasAny(frozenFoods)) {
+      return locale == 'de' ? 'Tiefkühlkost' : 'Frozen Foods';
+    }
+    if (hasAny(coffeeTea)) {
+      return locale == 'de' ? 'Kaffee und Tee' : 'Coffee & Tea';
+    }
+    if (hasAny(beverages)) {
+      return locale == 'de' ? 'Getränke' : 'Beverages';
+    }
+    if (hasAny(bakingIngredients)) {
+      return locale == 'de' ? 'Backzutaten' : 'Baking Ingredients';
+    }
     if (hasAny(bakery)) return locale == 'de' ? 'Bäckerei' : 'Bakery';
-    if (hasAny(drinks)) return locale == 'de' ? 'Getränke' : 'Drinks';
+    if (hasAny(dryGoods)) {
+      return locale == 'de' ? 'Trockene Waren' : 'Dry Goods';
+    }
+    if (hasAny(cannedGoods)) {
+      return locale == 'de' ? 'Dosen und Gläser' : 'Canned & Jarred Goods';
+    }
     if (hasAny(snacks)) {
-      return locale == 'de' ? 'Snacks & Süßes' : 'Snacks & Sweets';
+      return locale == 'de' ? 'Snacks und Süßigkeiten' : 'Snacks & Sweets';
     }
-    if (hasAny(hygiene)) {
-      return locale == 'de' ? 'Pflege & Reinigung' : 'Care & Cleaning';
+    if (hasAny(condiments)) {
+      return locale == 'de' ? 'Gewürze, Saucen, Öle' : 'Condiments, Sauces & Oils';
     }
-    if (hasAny(meatFish)) {
-      return locale == 'de' ? 'Fleisch & Fisch' : 'Meat & Fish';
+    if (hasAny(health)) return locale == 'de' ? 'Gesundheit' : 'Health';
+    if (hasAny(cosmetics)) {
+      return locale == 'de' ? 'Kosmetik und Hygiene' : 'Cosmetics & Hygiene';
     }
+    if (hasAny(cleaning)) {
+      return locale == 'de' ? 'Reinigung und Wäsche' : 'Cleaning & Laundry';
+    }
+    if (hasAny(baby)) return locale == 'de' ? 'Baby' : 'Baby';
+    if (hasAny(pets)) return locale == 'de' ? 'Haustiere' : 'Pets';
+    if (hasAny(alcohol)) return locale == 'de' ? 'Alkohol' : 'Alcohol';
     return locale == 'de' ? 'Sonstiges' : 'Other';
   }
 
   /// Adds an item using a local-first write path.
   ///
   /// The UI is updated from local state immediately and server sync runs in
-  /// the background. Category quality is refined asynchronously.
+  /// the background. Exact product names can be refined from the local catalog.
   Future<void> addItem(String rawName, {String locale = 'en'}) async {
     final id = _listId;
     if (id == null) return;

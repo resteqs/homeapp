@@ -56,10 +56,11 @@ When adding or renaming items:
 
 1. Fast fallback category is derived locally from keyword heuristics.
 2. Background resolver tries exact local catalog mapping first.
-3. If no local match, repository can query remote `global_items`.
-4. Resolved category is written back locally and synced.
+3. If there is no exact local match, the heuristic fallback category is kept.
+4. Refined category values are written back locally and synced.
 
-This gives immediate UX while still improving category quality over time.
+This keeps category resolution deterministic and removes any dependency on a
+remote product taxonomy table.
 
 ## Offline Product Search
 
@@ -78,6 +79,9 @@ No live backend calls are required per keystroke.
 - `groceryCatalog` (locale -> item names)
 - `groceryCategoryKeyByNameLowerEn`
 - `groceryCategoryKeyByNameLowerDe`
+
+The generated catalog is the app's source of truth for product suggestions and
+exact-name category resolution.
 
 Regenerate whenever source product data changes:
 

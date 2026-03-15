@@ -33,7 +33,7 @@ Project docs are under `docs/`.
 - `lib/models/`: data models used by UI/data layers
 - `lib/pages/`: screens and screen-specific widgets
 - `lib/l10n/`: localization source and generated classes
-- `generate_groceries.py`: source product dataset for SQL seed generation
+- `generate_groceries.py`: source product dataset for the offline grocery catalog
 - `generate_dart_catalog.py`: generator for offline Dart product catalog
 
 ## Grocery Module Architecture
@@ -71,6 +71,9 @@ Regenerate after changing the product source data:
 ```bash
 python3 generate_dart_catalog.py
 ```
+
+The product catalog is stored only on device. Supabase manages grocery lists
+and grocery list items, not the global product suggestion dataset.
 
 ## Run Locally
 

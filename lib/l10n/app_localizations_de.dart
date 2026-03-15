@@ -159,26 +159,77 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groceryDeleteAll => 'Alle löschen';
 
   @override
-  String get groceryCategoryProduce => 'Obst & Gemüse';
+  String get groceryCategoryAlcohol => 'Alkohol';
 
   @override
-  String get groceryCategoryDairy => 'Milchprodukte';
+  String get groceryCategoryBaby => 'Baby';
+
+  @override
+  String get groceryCategoryBakingIngredients => 'Backzutaten';
 
   @override
   String get groceryCategoryBakery => 'Bäckerei';
 
   @override
-  String get groceryCategoryDrinks => 'Getränke';
+  String get groceryCategoryCannedGoods => 'Dosen und Gläser';
 
   @override
-  String get groceryCategorySnacks => 'Snacks & Süßes';
+  String get groceryCategoryElectronics => 'Elektronik';
 
   @override
-  String get groceryCategoryCare => 'Pflege & Reinigung';
+  String get groceryCategoryReadyMeals => 'Fertiggerichte';
 
   @override
-  String get groceryCategoryMeat => 'Fleisch & Fisch';
+  String get groceryCategoryFish => 'Fisch und Meeresfrüchte';
+
+  @override
+  String get groceryCategoryMeat => 'Fleisch';
+
+  @override
+  String get groceryCategoryHealth => 'Gesundheit';
+
+  @override
+  String get groceryCategoryBeverages => 'Getränke';
+
+  @override
+  String get groceryCategoryCondiments => 'Gewürze, Saucen, Öle';
+
+  @override
+  String get groceryCategoryHomeGarden => 'Haus und Garten';
+
+  @override
+  String get groceryCategoryPets => 'Haustiere';
+
+  @override
+  String get groceryCategoryCoffeeTea => 'Kaffee und Tee';
+
+  @override
+  String get groceryCategoryClothing => 'Kleidung';
+
+  @override
+  String get groceryCategoryCosmeticsHygiene => 'Kosmetik und Hygiene';
+
+  @override
+  String get groceryCategoryDairy => 'Milchprodukte und Eier';
+
+  @override
+  String get groceryCategoryProduce => 'Obst und Gemüse';
+
+  @override
+  String get groceryCategoryCleaningLaundry => 'Reinigung und Wäsche';
+
+  @override
+  String get groceryCategoryStationery => 'Schreibwaren';
+
+  @override
+  String get groceryCategorySnacks => 'Snacks und Süßigkeiten';
 
   @override
   String get groceryCategoryOther => 'Sonstiges';
+
+  @override
+  String get groceryCategoryFrozenFoods => 'Tiefkühlkost';
+
+  @override
+  String get groceryCategoryDryGoods => 'Trockene Waren';
 }

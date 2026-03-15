@@ -55,7 +55,10 @@ class GroceryOverview extends StatelessWidget {
 
                     return Card(
                       elevation: 1,
-                      shadowColor: Colors.black.withValues(alpha: 0.1),
+                      shadowColor: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValues(alpha: 0.1),
                       color: Theme.of(context).colorScheme.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -115,8 +118,9 @@ class GroceryOverview extends StatelessWidget {
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor:
-                                            const Color(0xFFE0E0E0),
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
                                                 Theme.of(context)

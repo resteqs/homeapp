@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/models/grocery_item.dart';
 import 'package:homeapp/utils/category_utils.dart';
 
@@ -96,7 +97,7 @@ class GroceryItemTile extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: isBought
                     ? Theme.of(context).colorScheme.primary
-                    : Colors.transparent,
+                    : AppColors.transparent,
                 border: Border.all(
                   color: isBought
                       ? Theme.of(context).colorScheme.primary
@@ -105,7 +106,11 @@ class GroceryItemTile extends StatelessWidget {
                 ),
               ),
               child: isBought
-                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  ? Icon(
+                      Icons.check,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    )
                   : null,
             ),
           ),

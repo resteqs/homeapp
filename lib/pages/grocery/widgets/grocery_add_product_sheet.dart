@@ -151,6 +151,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
     return AnimatedBuilder(
       animation: widget.repository,
       builder: (context, _) {
@@ -197,27 +198,26 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
                 leading: isInList
                     ? CircleAvatar(
                         radius: 16,
-                        backgroundColor: Colors.grey.shade400,
-                        child: const Icon(Icons.check,
-                            color: Colors.white, size: 20),
+                        backgroundColor: colorScheme.outlineVariant,
+                        child: Icon(Icons.check,
+                            color: colorScheme.onSurface, size: 20),
                       )
                     : CircleAvatar(
                         radius: 16,
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: const Icon(Icons.add,
-                            color: Colors.white, size: 20),
+                        backgroundColor: colorScheme.primary,
+                        child: Icon(Icons.add,
+                            color: colorScheme.onPrimary, size: 20),
                       ),
                 title: Text(
                   product,
                   style: TextStyle(
-                    color: isInList
-                        ? Colors.grey
-                        : Theme.of(context).colorScheme.onSurface,
+                    color:
+                        isInList ? colorScheme.outline : colorScheme.onSurface,
                   ),
                 ),
                 trailing: isInList
                     ? IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
+                        icon: Icon(Icons.close, color: colorScheme.error),
                         onPressed: () => _toggleProduct(product),
                       )
                     : null,

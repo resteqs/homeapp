@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/models/grocery_item.dart';
 import 'package:homeapp/data/grocery_repository.dart';
@@ -218,7 +219,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
       context: context,
       isScrollControlled: true,
       backgroundColor:
-          Colors.transparent, // Let the sheet set its own background
+          AppColors.transparent, // Let the sheet set its own background
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
