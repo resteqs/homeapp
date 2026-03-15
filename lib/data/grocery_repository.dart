@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:homeapp/data/grocery_catalog.dart';
 import 'package:homeapp/data/local_grocery_store.dart';
 import 'package:homeapp/models/grocery_item.dart';
+import 'package:homeapp/models/household_custom_item.dart';
 
 /// Provider that manages grocery lists and their items.
 ///
@@ -36,8 +37,10 @@ class GroceryRepository extends ChangeNotifier {
   bool _queuedRemotePull = false;
   String? _lastError;
   String? _listId;
+  String? _householdId;
   DateTime? _lastRemotePullAt;
   Timer? _syncDebounceTimer;
+  List<HouseholdCustomItem> _customItems = const [];
 
   static const Duration _remotePullCooldown = Duration(seconds: 15);
   static const Duration _syncDebounceWindow = Duration(milliseconds: 350);
@@ -47,6 +50,9 @@ class GroceryRepository extends ChangeNotifier {
   bool get isSyncing => _isSyncing;
   String? get lastError => _lastError;
   String? get listId => _listId;
+  List<String> get customItemNames => _customItems
+      .map((item) => item.name)
+      .toList(growable: false);
 
   /// Initializes repository state.
   ///
@@ -62,14 +68,21 @@ class GroceryRepository extends ChangeNotifier {
       final bootstrap =
           await _supabase.rpc('ensure_user_household_and_default_lists');
       final resolvedListId = bootstrap['grocery_list_id']?.toString();
+      final resolvedHouseholdId = await _resolveHouseholdId(bootstrap);
       if (resolvedListId == null || resolvedListId.isEmpty) {
         throw StateError('No grocery list available for this user.');
       }
+      if (resolvedHouseholdId == null || resolvedHouseholdId.isEmpty) {
+        throw StateError('No household available for this user.');
+      }
 
       _listId = resolvedListId;
+      _householdId = resolvedHouseholdId;
       await _localStore.setMeta('active_grocery_list_id', resolvedListId);
+      await _localStore.setMeta('active_household_id', resolvedHouseholdId);
       // Show cached local data immediately, then reconcile with server.
       await refreshFromLocal();
+      await _refreshCustomItemsFromLocal();
       unawaited(sync(forceRemotePull: true));
 
       _connectivitySub ??=
@@ -84,9 +97,13 @@ class GroceryRepository extends ChangeNotifier {
       _lastError = error.toString();
 
       final cachedListId = await _localStore.getMeta('active_grocery_list_id');
+      final cachedHouseholdId =
+          await _localStore.getMeta('active_household_id');
       if (cachedListId != null && cachedListId.isNotEmpty) {
         _listId = cachedListId;
+        _householdId = cachedHouseholdId;
         await refreshFromLocal();
+        await _refreshCustomItemsFromLocal();
       }
     } finally {
       _isLoading = false;
@@ -111,6 +128,13 @@ class GroceryRepository extends ChangeNotifier {
     _items = List<GroceryItem>.unmodifiable(items);
   }
 
+  void _setCustomItems(List<HouseholdCustomItem> items) {
+    items.sort((left, right) => left.name.toLowerCase().compareTo(
+          right.name.toLowerCase(),
+        ));
+    _customItems = List<HouseholdCustomItem>.unmodifiable(items);
+  }
+
   void _upsertLocalItemInMemory(GroceryItem item) {
     final nextItems =
         _items.where((existing) => existing.id != item.id).toList();
@@ -125,6 +149,55 @@ class GroceryRepository extends ChangeNotifier {
       return;
     }
     _setItems(_items.where((item) => item.id != itemId).toList());
+  }
+
+  void _upsertLocalCustomItemInMemory(HouseholdCustomItem item) {
+    final normalizedName = item.name.toLowerCase();
+    final nextItems = _customItems
+        .where(
+          (existing) =>
+              existing.id != item.id && existing.name.toLowerCase() != normalizedName,
+        )
+        .toList();
+    if (item.householdId == _householdId) {
+      nextItems.add(item);
+    }
+    _setCustomItems(nextItems);
+  }
+
+  Future<void> _refreshCustomItemsFromLocal() async {
+    final householdId = _householdId;
+    if (householdId == null || householdId.isEmpty) {
+      _customItems = const [];
+      notifyListeners();
+      return;
+    }
+
+    _setCustomItems(await _localStore.getCustomItems(householdId));
+    notifyListeners();
+  }
+
+  Future<String?> _resolveHouseholdId(dynamic bootstrap) async {
+    final bootstrapHouseholdId = bootstrap is Map<String, dynamic>
+        ? bootstrap['household_id']?.toString()
+        : null;
+    if (bootstrapHouseholdId != null && bootstrapHouseholdId.isNotEmpty) {
+      return bootstrapHouseholdId;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      return await _localStore.getMeta('active_household_id');
+    }
+
+    final membership = await _supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+    return membership?['household_id']?.toString() ??
+        await _localStore.getMeta('active_household_id');
   }
 
   Future<void> _resolveCategoryInBackground(
@@ -199,6 +272,55 @@ class GroceryRepository extends ChangeNotifier {
     }
 
     return null;
+  }
+
+  String? _lookupCategoryFromCustomItems(String itemName) {
+    final normalized = itemName.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+
+    for (final item in _customItems) {
+      if (item.name.toLowerCase() == normalized) {
+        return item.category;
+      }
+    }
+    return null;
+  }
+
+  bool _isExactCatalogItem(String itemName) {
+    final normalized = itemName.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+
+    return groceryCategoryKeyByNameLowerEn.containsKey(normalized) ||
+        groceryCategoryKeyByNameLowerDe.containsKey(normalized);
+  }
+
+  Future<void> _upsertHouseholdCustomItemIfNeeded(
+    String itemName, {
+    required String category,
+  }) async {
+    final householdId = _householdId;
+    final normalized = itemName.trim();
+    if (householdId == null || householdId.isEmpty || normalized.isEmpty) {
+      return;
+    }
+    if (_isExactCatalogItem(normalized)) return;
+    if (_customItems.any(
+      (item) => item.name.toLowerCase() == normalized.toLowerCase(),
+    )) {
+      return;
+    }
+
+    final customItem = HouseholdCustomItem(
+      id: _uuid.v4(),
+      householdId: householdId,
+      name: normalized,
+      category: category,
+      syncStatus: 'pending_upsert',
+    );
+
+    await _localStore.upsertCustomItem(customItem);
+    _upsertLocalCustomItemInMemory(customItem);
+    notifyListeners();
   }
 
   String? _enCategoryNameFromKey(String key) {
@@ -477,7 +599,9 @@ class GroceryRepository extends ChangeNotifier {
     final name = rawName.trim();
     if (name.isEmpty) return;
 
-    final category = _fallbackCategoryFromItemName(name, locale: locale);
+    final category = _lookupCategoryFromLocalCatalog(name, locale: locale) ??
+      _lookupCategoryFromCustomItems(name) ??
+      _fallbackCategoryFromItemName(name, locale: locale);
 
     // Local-first write: create immediately in SQLite, then sync in background.
     final now = DateTime.now().toUtc();
@@ -498,6 +622,7 @@ class GroceryRepository extends ChangeNotifier {
 
     await _localStore.upsertItem(item);
     _upsertLocalItemInMemory(item);
+    await _upsertHouseholdCustomItemIfNeeded(name, category: category);
     notifyListeners();
     unawaited(_resolveCategoryInBackground(item, name, locale: locale));
     _scheduleSync();
@@ -564,6 +689,8 @@ class GroceryRepository extends ChangeNotifier {
   }) async {
     final normalizedName = newName.trim();
     final category =
+      _lookupCategoryFromLocalCatalog(normalizedName, locale: locale) ??
+        _lookupCategoryFromCustomItems(normalizedName) ??
         _fallbackCategoryFromItemName(normalizedName, locale: locale);
 
     final updated = item.copyWith(
@@ -579,6 +706,7 @@ class GroceryRepository extends ChangeNotifier {
 
     await _localStore.upsertItem(updated);
     _upsertLocalItemInMemory(updated);
+    await _upsertHouseholdCustomItemIfNeeded(normalizedName, category: category);
     notifyListeners();
     unawaited(
         _resolveCategoryInBackground(updated, normalizedName, locale: locale));
@@ -731,6 +859,32 @@ class GroceryRepository extends ChangeNotifier {
         await _localStore.deleteItemsByIds(deleteIds);
       }
 
+      final householdId = _householdId;
+      if (householdId != null && householdId.isNotEmpty) {
+        final pendingCustomUpserts =
+            await _localStore.getPendingCustomItemUpserts(householdId);
+        if (pendingCustomUpserts.isNotEmpty) {
+          await _supabase.from('household_custom_items').upsert(
+                pendingCustomUpserts
+                    .map(
+                      (item) => {
+                        'id': item.id,
+                        'household_id': item.householdId,
+                        'name': item.name,
+                        'category': item.category,
+                      },
+                    )
+                    .toList(growable: false),
+                onConflict: 'household_id,name',
+              );
+          await _localStore.markCustomItemUpsertsSynced(
+            pendingCustomUpserts
+                .map((item) => item.id)
+                .toList(growable: false),
+          );
+        }
+      }
+
       if (shouldPullRemote) {
         final remote = await _supabase
             .from('grocery_list_items')
@@ -746,8 +900,28 @@ class GroceryRepository extends ChangeNotifier {
             .toList(growable: false);
 
         await _localStore.mergeRemoteItems(id, remoteItems);
+
+        final householdId = _householdId;
+        if (householdId != null && householdId.isNotEmpty) {
+          final remoteCustomItems = await _supabase
+              .from('household_custom_items')
+              .select('id, household_id, name, category')
+              .eq('household_id', householdId)
+              .order('name');
+
+          final customItems = (remoteCustomItems as List<dynamic>)
+              .map(
+                (row) => HouseholdCustomItem.fromMap(
+                  {...row as Map<String, dynamic>, 'sync_status': 'synced'},
+                ),
+              )
+              .toList(growable: false);
+          await _localStore.mergeRemoteCustomItems(householdId, customItems);
+        }
+
         _lastRemotePullAt = DateTime.now().toUtc();
         await refreshFromLocal();
+        await _refreshCustomItemsFromLocal();
       } else {
         final refreshedItems = await _localStore.getItems(id);
         _setItems(refreshedItems);

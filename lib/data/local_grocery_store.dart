@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:homeapp/models/grocery_item.dart';
+import 'package:homeapp/models/household_custom_item.dart';
 
 /// A singleton local database manager using SQLite.
 ///
@@ -25,7 +26,7 @@ class LocalGroceryStore {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'homeapp_local.db'),
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         // Local-first cache for grocery items. sync_status tracks pending writes
         // so UI stays responsive while network sync runs in the background.
@@ -50,6 +51,16 @@ class LocalGroceryStore {
           CREATE TABLE local_meta(
             key TEXT PRIMARY KEY,
             value TEXT
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE local_household_custom_items(
+            id TEXT PRIMARY KEY,
+            household_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'Other',
+            sync_status TEXT NOT NULL
           )
         ''');
 
@@ -81,6 +92,18 @@ class LocalGroceryStore {
                 'ALTER TABLE local_grocery_items ADD COLUMN badge_emoji TEXT');
           }
         }
+        if (oldVersion < 6) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS local_household_custom_items(
+              id TEXT PRIMARY KEY,
+              household_id TEXT NOT NULL,
+              name TEXT NOT NULL,
+              category TEXT NOT NULL DEFAULT 'Other',
+              sync_status TEXT NOT NULL
+            )
+          ''');
+          await _createIndexes(db);
+        }
       },
     );
   }
@@ -93,6 +116,14 @@ class LocalGroceryStore {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_local_grocery_items_list_sync '
       'ON local_grocery_items(list_id, sync_status)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_local_household_custom_items_household_sync '
+      'ON local_household_custom_items(household_id, sync_status)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_local_household_custom_items_household_name '
+      'ON local_household_custom_items(household_id, name)',
     );
   }
 
@@ -142,6 +173,17 @@ class LocalGroceryStore {
     return rows.map(GroceryItem.fromMap).toList();
   }
 
+  Future<List<HouseholdCustomItem>> getCustomItems(String householdId) async {
+    final db = await database;
+    final rows = await db.query(
+      'local_household_custom_items',
+      where: 'household_id = ?',
+      whereArgs: [householdId],
+      orderBy: 'name COLLATE NOCASE ASC',
+    );
+    return rows.map(HouseholdCustomItem.fromMap).toList();
+  }
+
   Future<List<GroceryItem>> getPendingUpserts(String listId) async {
     final db = await database;
     final rows = await db.query(
@@ -164,6 +206,19 @@ class LocalGroceryStore {
     return rows.map(GroceryItem.fromMap).toList();
   }
 
+  Future<List<HouseholdCustomItem>> getPendingCustomItemUpserts(
+    String householdId,
+  ) async {
+    final db = await database;
+    final rows = await db.query(
+      'local_household_custom_items',
+      where: 'household_id = ? AND sync_status = ?',
+      whereArgs: [householdId, 'pending_upsert'],
+      orderBy: 'name COLLATE NOCASE ASC',
+    );
+    return rows.map(HouseholdCustomItem.fromMap).toList();
+  }
+
   Future<void> upsertItem(GroceryItem item) async {
     final db = await database;
     await db.insert(
@@ -179,6 +234,30 @@ class LocalGroceryStore {
     for (final item in items) {
       batch.insert(
         'local_grocery_items',
+        item.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> upsertCustomItem(HouseholdCustomItem item) async {
+    final db = await database;
+    await db.insert(
+      'local_household_custom_items',
+      item.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> upsertCustomItems(List<HouseholdCustomItem> items) async {
+    if (items.isEmpty) return;
+
+    final db = await database;
+    final batch = db.batch();
+    for (final item in items) {
+      batch.insert(
+        'local_household_custom_items',
         item.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -207,6 +286,19 @@ class LocalGroceryStore {
       'UPDATE local_grocery_items '
       'SET sync_status = ? '
       'WHERE sync_status = ? AND deleted_at IS NULL AND id IN ($placeholders)',
+      ['synced', 'pending_upsert', ...ids],
+    );
+  }
+
+  Future<void> markCustomItemUpsertsSynced(List<String> ids) async {
+    if (ids.isEmpty) return;
+
+    final db = await database;
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await db.rawUpdate(
+      'UPDATE local_household_custom_items '
+      'SET sync_status = ? '
+      'WHERE sync_status = ? AND id IN ($placeholders)',
       ['synced', 'pending_upsert', ...ids],
     );
   }
@@ -286,6 +378,48 @@ class LocalGroceryStore {
         );
         batch.insert(
           'local_grocery_items',
+          item.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  Future<void> mergeRemoteCustomItems(
+    String householdId,
+    List<HouseholdCustomItem> items,
+  ) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      if (items.isEmpty) {
+        await txn.delete(
+          'local_household_custom_items',
+          where: 'household_id = ? AND sync_status = ?',
+          whereArgs: [householdId, 'synced'],
+        );
+        return;
+      }
+
+      final remoteIds = items.map((item) => item.id).toList(growable: false);
+      final placeholders = List.filled(remoteIds.length, '?').join(', ');
+      await txn.delete(
+        'local_household_custom_items',
+        where:
+            'household_id = ? AND sync_status = ? AND id NOT IN ($placeholders)',
+        whereArgs: [householdId, 'synced', ...remoteIds],
+      );
+
+      final batch = txn.batch();
+      for (final item in items) {
+        batch.update(
+          'local_household_custom_items',
+          item.toMap(),
+          where: 'id = ? AND sync_status = ?',
+          whereArgs: [item.id, 'synced'],
+        );
+        batch.insert(
+          'local_household_custom_items',
           item.toMap(),
           conflictAlgorithm: ConflictAlgorithm.ignore,
         );

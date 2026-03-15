@@ -30,6 +30,78 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
 
   late List<String> _baseRecommendations;
 
+  Map<String, String> get _knownDisplayNamesByLower {
+    final namesByLower = <String, String>{};
+
+    void addName(String rawName) {
+      final trimmed = rawName.trim();
+      if (trimmed.isEmpty) return;
+      namesByLower.putIfAbsent(trimmed.toLowerCase(), () => trimmed);
+    }
+
+    for (final name in _catalog) {
+      addName(name);
+    }
+    for (final name in widget.repository.customItemNames) {
+      addName(name);
+    }
+    for (final item in widget.repository.items) {
+      addName(item.name);
+    }
+
+    return namesByLower;
+  }
+
+  List<String> get _allSuggestionCandidates =>
+      _knownDisplayNamesByLower.values.toList(growable: false);
+
+  Set<String> get _customItemNamesLower =>
+      widget.repository.customItemNames.map((name) => name.toLowerCase()).toSet();
+
+  Map<String, DateTime> get _lastUsedAtByNameLower {
+    final lastUsedByName = <String, DateTime>{};
+    for (final item in widget.repository.items) {
+      final key = item.name.trim().toLowerCase();
+      if (key.isEmpty) continue;
+
+      final current = lastUsedByName[key];
+      if (current == null || item.updatedAt.isAfter(current)) {
+        lastUsedByName[key] = item.updatedAt;
+      }
+    }
+    return lastUsedByName;
+  }
+
+  int _compareSuggestionPriority(
+    String a,
+    String b,
+    String query,
+    Set<String> customNamesLower,
+    Map<String, DateTime> lastUsedAtByNameLower,
+  ) {
+    final aLower = a.toLowerCase();
+    final bLower = b.toLowerCase();
+
+    final aStarts = aLower.startsWith(query);
+    final bStarts = bLower.startsWith(query);
+    if (aStarts != bStarts) return aStarts ? -1 : 1;
+
+    final aIsCustom = customNamesLower.contains(aLower);
+    final bIsCustom = customNamesLower.contains(bLower);
+    if (aIsCustom != bIsCustom) return aIsCustom ? -1 : 1;
+
+    final aUsedAt = lastUsedAtByNameLower[aLower];
+    final bUsedAt = lastUsedAtByNameLower[bLower];
+    if (aUsedAt != null || bUsedAt != null) {
+      if (aUsedAt == null) return 1;
+      if (bUsedAt == null) return -1;
+      final recencyCompare = bUsedAt.compareTo(aUsedAt);
+      if (recencyCompare != 0) return recencyCompare;
+    }
+
+    return aLower.compareTo(bLower);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -90,21 +162,25 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       if (query.isEmpty) {
         _filteredRecommendations = List.from(_baseRecommendations);
       } else {
+        final customNamesLower = _customItemNamesLower;
+        final lastUsedAtByNameLower = _lastUsedAtByNameLower;
+
         // Substring filtering is done against local in-memory data to keep
         // typing responsive and avoid per-keystroke backend calls.
-        final matches = _catalog
+        final matches = _allSuggestionCandidates
             .where((item) => item.toLowerCase().contains(query))
             .toList();
 
-        // Sort items so exact substring matches or "starts with" matches appear higher
+        // Rank local matches for fast picking: prefix match, then family custom
+        // products, then recently used products, then alphabetically.
         matches.sort((a, b) {
-          final aLower = a.toLowerCase();
-          final bLower = b.toLowerCase();
-          final aStarts = aLower.startsWith(query);
-          final bStarts = bLower.startsWith(query);
-          if (aStarts && !bStarts) return -1;
-          if (!aStarts && bStarts) return 1;
-          return aLower.compareTo(bLower);
+          return _compareSuggestionPriority(
+            a,
+            b,
+            query,
+            customNamesLower,
+            lastUsedAtByNameLower,
+          );
         });
 
         _filteredRecommendations = matches;
@@ -133,13 +209,18 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     }
   }
 
+  String _capitalizeFirstLetter(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
+
   void _toggleProduct(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty) return;
 
     // Use canonical catalog casing where possible to keep names consistent.
-    final canonical =
-        _lowerToDisplayName[normalized.toLowerCase()] ?? normalized;
+    final canonical = _knownDisplayNamesByLower[normalized.toLowerCase()] ??
+        _capitalizeFirstLetter(normalized);
     final item = _getItemFromList(canonical);
     if (item != null) {
       await widget.repository.deleteItem(item);
@@ -183,6 +264,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
                   controller: _searchController,
                   focusNode: _focusNode,
                   autofocus: true,
+                  textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
                     hintText: l10n.groceryAddItem,
                     border: InputBorder.none,

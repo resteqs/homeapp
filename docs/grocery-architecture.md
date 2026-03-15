@@ -67,10 +67,24 @@ remote product taxonomy table.
 `GroceryAddProductSheet` searches fully offline:
 
 - Empty input: shows curated base recommendations.
-- With input: filters full local catalog by substring.
+- With input: filters the merged local suggestion pool by substring.
+- Suggestion pool includes the generated offline catalog, items already in the
+   active list, and synced household custom items.
 - Existing items are highlighted via a lowercased set for O(1) checks.
 
 No live backend calls are required per keystroke.
+
+## Household Custom Items
+
+Unknown product names entered by a user are persisted into the shared
+`household_custom_items` catalog:
+
+- New custom names are written to SQLite immediately.
+- Background sync batches them to Supabase using household-scoped upserts.
+- Remote custom items are pulled into SQLite during normal sync refreshes.
+
+This keeps search local-only while still sharing family-specific products
+across devices.
 
 ## Generated Catalog Maintenance
 
