@@ -145,6 +145,12 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       await widget.repository.deleteItem(item);
     } else {
       await widget.repository.addItem(canonical, locale: widget.locale);
+      // Clear the visible input but keep the current filtered list until
+      // the user starts typing again.
+      _searchController.removeListener(_onSearchChanged);
+      _searchController.clear();
+      _searchController.addListener(_onSearchChanged);
+      _focusNode.requestFocus();
     }
   }
 
