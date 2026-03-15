@@ -3,11 +3,13 @@ import 'package:homeapp/l10n/app_localizations.dart';
 
 enum ListMenuAction { delete }
 
+/// Overview screen listing all grocery lists and completion progress.
 class GroceryOverview extends StatelessWidget {
   final List<Map<String, dynamic>> lists;
   final bool loadingLists;
   final ValueChanged<String> onListSelected;
-  final void Function({required String listId, required String listName}) onDeleteList;
+  final void Function({required String listId, required String listName})
+      onDeleteList;
 
   const GroceryOverview({
     super.key,
@@ -30,18 +32,26 @@ class GroceryOverview extends StatelessWidget {
           : lists.isEmpty
               ? Center(child: Text(l10n.groceryNoLists))
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: lists.length,
                   itemBuilder: (context, index) {
                     final list = lists[index];
                     final listId = list['id']?.toString() ?? '';
-                    final listName = list['name']?.toString() ?? l10n.groceryDefaultListName;
+                    final listName =
+                        list['name']?.toString() ?? l10n.groceryDefaultListName;
 
-                    final rawItems = list['grocery_list_items'] as List<dynamic>? ?? <dynamic>[];
-                    final items = rawItems.where((row) => row['deleted_at'] == null).toList();
+                    final rawItems =
+                        list['grocery_list_items'] as List<dynamic>? ??
+                            <dynamic>[];
+                    final items = rawItems
+                        .where((row) => row['deleted_at'] == null)
+                        .toList();
                     final totalCount = items.length;
-                    final boughtCount = items.where((row) => row['is_bought'] == true).length;
-                    final progress = totalCount > 0 ? boughtCount / totalCount : 0.0;
+                    final boughtCount =
+                        items.where((row) => row['is_bought'] == true).length;
+                    final progress =
+                        totalCount > 0 ? boughtCount / totalCount : 0.0;
 
                     return Card(
                       elevation: 1,
@@ -55,17 +65,21 @@ class GroceryOverview extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => onListSelected(listId),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
                                       listName,
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -73,7 +87,8 @@ class GroceryOverview extends StatelessWidget {
                                     padding: EdgeInsets.zero,
                                     onSelected: (action) {
                                       if (action == ListMenuAction.delete) {
-                                        onDeleteList(listId: listId, listName: listName);
+                                        onDeleteList(
+                                            listId: listId, listName: listName);
                                       }
                                     },
                                     itemBuilder: (context) => [
@@ -84,7 +99,9 @@ class GroceryOverview extends StatelessWidget {
                                     ],
                                     icon: Icon(
                                       Icons.more_vert,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -98,8 +115,13 @@ class GroceryOverview extends StatelessWidget {
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor: const Color(0xFFE0E0E0),
-                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                                        backgroundColor:
+                                            const Color(0xFFE0E0E0),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Theme.of(context)
+                                                    .colorScheme
+                                                    .primary),
                                       ),
                                     ),
                                   ),
@@ -108,7 +130,9 @@ class GroceryOverview extends StatelessWidget {
                                     '$boughtCount/$totalCount',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontSize: 14,
                                     ),
                                   ),

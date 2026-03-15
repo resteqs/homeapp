@@ -11,6 +11,7 @@ enum SelectionAction { delete, move, cancel }
 
 enum DetailedListMenuAction { delete }
 
+/// Detailed grocery list screen with grouping, editing, and batch actions.
 class GroceryDetailedList extends StatefulWidget {
   final List<Map<String, dynamic>> lists;
   final GroceryRepository repository;

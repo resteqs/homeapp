@@ -4,39 +4,27 @@ import 'package:nowa_runtime/nowa_runtime.dart';
 @NowaGenerated()
 final ThemeData lightTheme = ThemeData(
   useMaterial3: true,
-  scaffoldBackgroundColor: const Color(0xFFEDF1D6),
+  scaffoldBackgroundColor: const Color(0xFFD8E9A8),
   colorScheme: ColorScheme.fromSeed(
-    seedColor: const Color(0xFF609966),
-    primary: const Color(0xFF609966),
-    secondary: const Color(0xFF9DC08B),
-    surface: Colors.white, // White cards on EDF1D6 background
-    onSurface: const Color(0xFF40513B),
-    onPrimary: Colors.white,
+    brightness: Brightness.light,
+    seedColor: const Color(0xFF1E5128),
+    primary: const Color(0xFF1E5128),
+    secondary: const Color(0xFF4E9F3D),
+    tertiary: const Color(0xFF191A19),
+    surface: const Color(0xFFD8E9A8),
+    onSurface: const Color(0xFF191A19),
+    onPrimary: const Color(0xFFD8E9A8),
   ),
   textTheme: const TextTheme().apply(
-    bodyColor: const Color(0xFF40513B),
-    displayColor: const Color(0xFF40513B),
+    bodyColor: const Color(0xFF191A19),
+    displayColor: const Color(0xFF191A19),
   ),
   appBarTheme: const AppBarTheme(
-    backgroundColor: Color(0xFFEDF1D6),
-    foregroundColor: Color(0xFF40513B),
+    backgroundColor: Color(0xFFD8E9A8),
+    foregroundColor: Color(0xFF191A19),
     elevation: 0,
   ),
 );
 
 @NowaGenerated()
-final ThemeData darkTheme = ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(
-    brightness: Brightness.dark,
-    seedColor: const Color(0xFF609966),
-    primary: const Color(0xFF9DC08B),
-    secondary: const Color(0xFF609966),
-    surface: const Color(0xFF40513B),
-    onSurface: const Color(0xFFEDF1D6),
-  ),
-  textTheme: const TextTheme().apply(
-    bodyColor: const Color(0xFFEDF1D6),
-    displayColor: const Color(0xFFEDF1D6),
-  ),
-);
+final ThemeData darkTheme = lightTheme;

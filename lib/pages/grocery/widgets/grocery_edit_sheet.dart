@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:homeapp/models/grocery_item.dart';
 
+/// Bottom sheet for editing one grocery item and optional metadata fields.
 class GroceryEditSheet extends StatefulWidget {
   final GroceryItem item;
-  final Future<void> Function(GroceryItem item, String newName, int quantity, String? unit)
-      onSave;
+  final Future<void> Function(
+      GroceryItem item, String newName, int quantity, String? unit) onSave;
   final Future<void> Function(GroceryItem item) onDelete;
 
   const GroceryEditSheet({
@@ -25,7 +26,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
   late TextEditingController _unitController;
   late int _quantity;
 
-  final DraggableScrollableController _sheetController = DraggableScrollableController();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
   final FocusNode _nameNode = FocusNode();
   final FocusNode _quantityNode = FocusNode();
   final FocusNode _unitNode = FocusNode();
@@ -47,8 +49,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
     _quantity = widget.item.quantity;
-    _quantityController = TextEditingController(
-        text: _quantity > 0 ? _quantity.toString() : '');
+    _quantityController =
+        TextEditingController(text: _quantity > 0 ? _quantity.toString() : '');
     _unitController = TextEditingController(text: widget.item.unit ?? '');
 
     void expandSheet() {
@@ -61,11 +63,21 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
       }
     }
 
-    _nameNode.addListener(() { if (_nameNode.hasFocus) expandSheet(); });
-    _quantityNode.addListener(() { if (_quantityNode.hasFocus) expandSheet(); });
-    _unitNode.addListener(() { if (_unitNode.hasFocus) expandSheet(); });
-    _noteNode.addListener(() { if (_noteNode.hasFocus) expandSheet(); });
-    _priceNode.addListener(() { if (_priceNode.hasFocus) expandSheet(); });
+    _nameNode.addListener(() {
+      if (_nameNode.hasFocus) expandSheet();
+    });
+    _quantityNode.addListener(() {
+      if (_quantityNode.hasFocus) expandSheet();
+    });
+    _unitNode.addListener(() {
+      if (_unitNode.hasFocus) expandSheet();
+    });
+    _noteNode.addListener(() {
+      if (_noteNode.hasFocus) expandSheet();
+    });
+    _priceNode.addListener(() {
+      if (_priceNode.hasFocus) expandSheet();
+    });
   }
 
   @override
@@ -88,7 +100,10 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
     final newName = _nameController.text.trim();
     if (newName.isEmpty) return;
     final unitText = _unitController.text.trim();
-    widget.onSave(widget.item, newName, _quantity, unitText.isEmpty ? null : unitText).then((_) {
+    widget
+        .onSave(
+            widget.item, newName, _quantity, unitText.isEmpty ? null : unitText)
+        .then((_) {
       if (mounted) Navigator.of(context).pop();
     });
   }
@@ -243,7 +258,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                               ? () {
                                   setState(() {
                                     _quantity--;
-                                    _quantityController.text = _quantity.toString();
+                                    _quantityController.text =
+                                        _quantity.toString();
                                   });
                                 }
                               : null,
@@ -396,7 +412,9 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.errorContainer, // Light red tinted background
+                          color: Theme.of(context)
+                              .colorScheme
+                              .errorContainer, // Light red tinted background
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: IconButton(

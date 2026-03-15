@@ -6,6 +6,8 @@ import 'settings_tab.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 
 @NowaGenerated()
+
+/// Top-level authenticated shell with bottom navigation.
 class HomePage extends StatefulWidget {
   @NowaGenerated({'loader': 'auto-constructor'})
   const HomePage({super.key});

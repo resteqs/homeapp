@@ -6,12 +6,15 @@ import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:homeapp/pages/home_page.dart';
 import 'package:homeapp/pages/auth_page.dart';
 
+/// Rebuild trigger for GoRouter based on stream events.
+///
+/// Used for auth state stream so redirects run immediately after sign in/out.
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
     _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
+          (dynamic _) => notifyListeners(),
+        );
   }
 
   late final StreamSubscription<dynamic> _subscription;
@@ -38,7 +41,8 @@ final GoRouter appRouter = GoRouter(
     }
     return null;
   },
-  refreshListenable: GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
+  refreshListenable:
+      GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
   routes: [
     GoRoute(
       path: '/auth',

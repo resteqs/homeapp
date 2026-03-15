@@ -1,6 +1,5 @@
 import re
 
-
 """Generate an offline Dart grocery catalog from the Python source dataset.
 
 Input:
@@ -14,8 +13,8 @@ Output:
 
 
 def main():
-        # Read source file once and parse PRODUCTS with a regex that matches tuple
-        # entries. This keeps generation deterministic and dependency-free.
+    # Read source file once and parse PRODUCTS with a regex that matches tuple
+    # entries. This keeps generation deterministic and dependency-free.
     with open("generate_groceries.py", "r") as f:
         content = f.read()
 

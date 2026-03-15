@@ -3,6 +3,22 @@
 Home management app built with Flutter, with an offline-first grocery module
 that syncs local SQLite changes to Supabase.
 
+## Full Documentation
+
+Project docs are under `docs/`.
+
+- [Documentation Index](docs/index.md)
+- [Architecture Overview](docs/architecture-overview.md)
+- [Setup and Runbook](docs/setup-and-runbook.md)
+- [Navigation and App State](docs/navigation-and-state.md)
+- [Auth Module](docs/module-auth.md)
+- [Grocery Module](docs/grocery-architecture.md)
+- [Home and Settings Modules](docs/module-home-settings.md)
+- [Data Layer and Sync](docs/data-layer-and-sync.md)
+- [Localization Guide](docs/localization-guide.md)
+- [Scripts and Generated Files](docs/scripts-and-generated-files.md)
+- [Testing and Quality](docs/testing-and-quality.md)
+
 ## Tech Stack
 
 - Flutter / Dart

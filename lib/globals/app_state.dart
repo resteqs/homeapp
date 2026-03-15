@@ -6,6 +6,11 @@ import 'package:homeapp/main.dart';
 import 'dart:ui' as ui;
 
 @NowaGenerated()
+
+/// Global app state for theme and locale.
+///
+/// Locale is persisted via SharedPreferences so language selection survives app
+/// restarts.
 class AppState extends ChangeNotifier {
   AppState();
 
@@ -28,12 +33,14 @@ class AppState extends ChangeNotifier {
 
   Locale get locale => _locale;
 
+  /// Updates locale and persists the language code.
   void setLocale(Locale newLocale) {
     _locale = newLocale;
     sharedPrefs.setString('languageCode', newLocale.languageCode);
     notifyListeners();
   }
 
+  /// Updates theme and notifies listeners.
   void changeTheme(ThemeData theme) {
     _theme = theme;
     notifyListeners();

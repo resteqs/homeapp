@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/globals/app_state.dart';
+
+/// Settings tab for language, attribution, and sign-out actions.
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
 
@@ -22,7 +24,9 @@ class _SettingsTabState extends State<SettingsTab> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.authSignoutError(error.toString()))),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!
+                .authSignoutError(error.toString()))),
       );
     } finally {
       if (mounted) {
@@ -46,15 +50,21 @@ class _SettingsTabState extends State<SettingsTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.of(context)!.settingsLanguage, style: const TextStyle(fontSize: 16)),
+              Text(AppLocalizations.of(context)!.settingsLanguage,
+                  style: const TextStyle(fontSize: 16)),
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(value: 'en', label: Text(AppLocalizations.of(context)!.langEnglish)),
-                  ButtonSegment(value: 'de', label: Text(AppLocalizations.of(context)!.langGerman)),
+                  ButtonSegment(
+                      value: 'en',
+                      label: Text(AppLocalizations.of(context)!.langEnglish)),
+                  ButtonSegment(
+                      value: 'de',
+                      label: Text(AppLocalizations.of(context)!.langGerman)),
                 ],
                 selected: {AppState.of(context).locale.languageCode},
                 onSelectionChanged: (Set<String> newSelection) {
-                  AppState.of(context, listen: false).setLocale(Locale(newSelection.first));
+                  AppState.of(context, listen: false)
+                      .setLocale(Locale(newSelection.first));
                 },
               ),
             ],
@@ -67,8 +77,10 @@ class _SettingsTabState extends State<SettingsTab> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text(AppLocalizations.of(context)!.settingsAttributions),
-                  content: const SelectableText('Icons by Icons8 (https://icons8.com)'),
+                  title:
+                      Text(AppLocalizations.of(context)!.settingsAttributions),
+                  content: const SelectableText(
+                      'Icons by Icons8 (https://icons8.com)'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -83,7 +95,9 @@ class _SettingsTabState extends State<SettingsTab> {
           ElevatedButton.icon(
             onPressed: _isSigningOut ? null : _signOut,
             icon: const Icon(Icons.logout),
-            label: Text(_isSigningOut ? AppLocalizations.of(context)!.settingsLoggingOut : AppLocalizations.of(context)!.settingsLogout),
+            label: Text(_isSigningOut
+                ? AppLocalizations.of(context)!.settingsLoggingOut
+                : AppLocalizations.of(context)!.settingsLogout),
           ),
         ],
       ),

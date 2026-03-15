@@ -6,6 +6,10 @@ import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/pages/grocery/grocery_overview.dart';
 import 'package:homeapp/pages/grocery/grocery_detailed_list.dart';
 
+/// Grocery feature host widget.
+///
+/// Owns one repository instance and switches between overview and detailed list
+/// views.
 class GroceryTab extends StatefulWidget {
   const GroceryTab({super.key});
 
@@ -60,7 +64,8 @@ class _GroceryTabState extends State<GroceryTab> {
     }
   }
 
-  Future<void> _showDeleteListDialog({required String listId, required String listName}) async {
+  Future<void> _showDeleteListDialog(
+      {required String listId, required String listName}) async {
     final l10n = AppLocalizations.of(context)!;
     final shouldDelete = await showDialog<bool>(
       context: context,

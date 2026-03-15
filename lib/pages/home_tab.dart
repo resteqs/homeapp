@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Simple profile summary tab for the authenticated user.
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 

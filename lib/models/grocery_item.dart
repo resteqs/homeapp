@@ -1,6 +1,6 @@
 /// Represents a single grocery item within a grocery list.
 ///
-/// Handes mapping from SQLite/Supabase to Dart objects and includes
+/// Handles mapping from SQLite/Supabase to Dart objects and includes
 /// synchronization state tracking through [syncStatus].
 class GroceryItem {
   final String id;
@@ -38,7 +38,9 @@ class GroceryItem {
           DateTime.now().toUtc(),
       deletedAt: DateTime.tryParse(map['deleted_at']?.toString() ?? ''),
       syncStatus: map['sync_status']?.toString() ?? 'synced',
-      quantity: map['quantity'] != null ? int.tryParse(map['quantity'].toString()) ?? 1 : 1,
+      quantity: map['quantity'] != null
+          ? int.tryParse(map['quantity'].toString()) ?? 1
+          : 1,
       unit: map['unit']?.toString(),
     );
   }

@@ -8,6 +8,8 @@ class CategoryVisual {
   final Color color;
 }
 
+/// Helpers for mapping raw category labels to app category keys, localized
+/// labels, and display visuals.
 class CategoryUtils {
   static final Map<String, String> _cache = {};
   static String categoryKeyFromRaw(String rawCategory) {
@@ -19,7 +21,8 @@ class CategoryUtils {
         category.contains('gemu') ||
         category.contains('fruit') ||
         category.contains('veg')) {
-      _cache[rawCategory] = 'produce'; return 'produce';
+      _cache[rawCategory] = 'produce';
+      return 'produce';
     }
 
     if (category.contains('dairy') ||
@@ -27,14 +30,16 @@ class CategoryUtils {
         category.contains('kase') ||
         category.contains('käse') ||
         category.contains('milch')) {
-      _cache[rawCategory] = 'dairy'; return 'dairy';
+      _cache[rawCategory] = 'dairy';
+      return 'dairy';
     }
 
     if (category.contains('bakery') ||
         category.contains('baker') ||
         category.contains('bread') ||
         category.contains('brot')) {
-      _cache[rawCategory] = 'bakery'; return 'bakery';
+      _cache[rawCategory] = 'bakery';
+      return 'bakery';
     }
 
     if (category.contains('drink') ||
@@ -42,11 +47,15 @@ class CategoryUtils {
         category.contains('getränk') ||
         category.contains('water') ||
         category.contains('wasser')) {
-      _cache[rawCategory] = 'drinks'; return 'drinks';
+      _cache[rawCategory] = 'drinks';
+      return 'drinks';
     }
 
-    if (category.contains('snack') || category.contains('sweet') || category.contains('su')) {
-      _cache[rawCategory] = 'snacks'; return 'snacks';
+    if (category.contains('snack') ||
+        category.contains('sweet') ||
+        category.contains('su')) {
+      _cache[rawCategory] = 'snacks';
+      return 'snacks';
     }
 
     if (category.contains('care') ||
@@ -54,7 +63,8 @@ class CategoryUtils {
         category.contains('reinigung') ||
         category.contains('hygiene') ||
         category.contains('pflege')) {
-      _cache[rawCategory] = 'care'; return 'care';
+      _cache[rawCategory] = 'care';
+      return 'care';
     }
 
     if (category.contains('meat') ||
@@ -62,14 +72,16 @@ class CategoryUtils {
         category.contains('fish') ||
         category.contains('fisch') ||
         category.contains('deli')) {
-      _cache[rawCategory] = 'meat'; return 'meat';
+      _cache[rawCategory] = 'meat';
+      return 'meat';
     }
 
     _cache[rawCategory] = 'other';
     return 'other';
   }
 
-  static String localizedCategoryName(BuildContext context, String categoryKey) {
+  static String localizedCategoryName(
+      BuildContext context, String categoryKey) {
     final l10n = AppLocalizations.of(context)!;
     switch (categoryKey) {
       case 'produce':
