@@ -22,7 +22,10 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
   final TextEditingController _searchController = TextEditingController();
   List<String> _filteredRecommendations = [];
   final FocusNode _focusNode = FocusNode();
+  // Locale-specific offline catalog. Cached once in initState to avoid work
+  // on every keystroke.
   late final List<String> _catalog;
+  // Keeps canonical display names for lowercased user input.
   final Map<String, String> _lowerToDisplayName = <String, String>{};
 
   late List<String> _baseRecommendations;
@@ -87,6 +90,8 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       if (query.isEmpty) {
         _filteredRecommendations = List.from(_baseRecommendations);
       } else {
+        // Substring filtering is done against local in-memory data to keep
+        // typing responsive and avoid per-keystroke backend calls.
         final matches = _catalog
             .where((item) => item.toLowerCase().contains(query))
             .toList();
@@ -113,6 +118,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     });
   }
 
+  // Built once per frame and reused for all visible rows.
   Set<String> get _activeItemNamesLower => widget.repository.items
       .where((item) => !item.isBought)
       .map((item) => item.name.toLowerCase())
@@ -131,6 +137,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     final normalized = name.trim();
     if (normalized.isEmpty) return;
 
+    // Use canonical catalog casing where possible to keep names consistent.
     final canonical =
         _lowerToDisplayName[normalized.toLowerCase()] ?? normalized;
     final item = _getItemFromList(canonical);

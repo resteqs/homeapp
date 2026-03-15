@@ -51,6 +51,10 @@ class GroceryRepository extends ChangeNotifier {
   String? get lastError => _lastError;
   String? get listId => _listId;
 
+  /// Initializes repository state.
+  ///
+  /// This method intentionally loads local data before remote reconciliation so
+  /// screens can render immediately when opening the grocery module.
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
@@ -93,6 +97,7 @@ class GroceryRepository extends ChangeNotifier {
     }
   }
 
+  /// Reloads in-memory items from local SQLite for the active list.
   Future<void> refreshFromLocal() async {
     final id = _listId;
     if (id == null) {
@@ -256,6 +261,10 @@ class GroceryRepository extends ChangeNotifier {
     }
   }
 
+  /// Schedules sync work with a small debounce to batch rapid mutations.
+  ///
+  /// Example: quickly toggling several items should produce one sync burst,
+  /// not one network call per tap.
   void _scheduleSync({bool forceRemotePull = false}) {
     if (forceRemotePull) {
       _syncDebounceTimer?.cancel();
@@ -433,6 +442,10 @@ class GroceryRepository extends ChangeNotifier {
     return locale == 'de' ? 'Sonstiges' : 'Other';
   }
 
+  /// Adds an item using a local-first write path.
+  ///
+  /// The UI is updated from local state immediately and server sync runs in
+  /// the background. Category quality is refined asynchronously.
   Future<void> addItem(String rawName, {String locale = 'en'}) async {
     final id = _listId;
     if (id == null) return;
@@ -464,6 +477,7 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync();
   }
 
+  /// Toggles an item's bought flag locally and queues background sync.
   Future<void> toggleItem(GroceryItem item) async {
     // Local-first toggle for offline support and immediate UI feedback.
     final updated = item.copyWith(
@@ -478,6 +492,7 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync();
   }
 
+  /// Marks one item for delete locally and queues background sync.
   Future<void> deleteItem(GroceryItem item) async {
     // Mark as pending delete locally so item disappears right away. Sync will
     // perform a hard delete on Supabase and then purge local row.
@@ -493,6 +508,7 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync();
   }
 
+  /// Marks multiple items for delete in one local batch operation.
   Future<void> deleteItems(List<GroceryItem> items) async {
     final now = DateTime.now().toUtc();
     final updatedItems = items
@@ -510,6 +526,7 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync();
   }
 
+  /// Updates item details locally and resolves category in the background.
   Future<void> updateItemDetails(
     GroceryItem item,
     String newName,
@@ -552,6 +569,7 @@ class GroceryRepository extends ChangeNotifier {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  /// Switches active list and forces one remote pull for fresh list state.
   Future<void> setActiveList(String id) async {
     _listId = id;
     await _localStore.setMeta('active_grocery_list_id', id);
@@ -559,6 +577,7 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync(forceRemotePull: true);
   }
 
+  /// Moves items to another list locally and schedules a batched sync.
   Future<void> moveItemsToList(
       List<GroceryItem> items, String targetListId) async {
     if (items.isEmpty) return;
@@ -594,6 +613,13 @@ class GroceryRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Synchronizes local pending changes with Supabase.
+  ///
+  /// Order is important:
+  /// 1. upserts, 2. deletes, 3. optional remote pull/merge.
+  ///
+  /// If called while already syncing, one follow-up pass is queued so new
+  /// local mutations are not dropped.
   Future<void> sync({bool forceRemotePull = false}) async {
     final id = _listId;
     if (id == null) return;

@@ -1,7 +1,21 @@
 import re
 
 
+"""Generate an offline Dart grocery catalog from the Python source dataset.
+
+Input:
+- generate_groceries.py (PRODUCTS tuples: category_key, en_name, de_name)
+
+Output:
+- lib/data/grocery_catalog.dart
+    - groceryCatalog: localized product names
+    - groceryCategoryKeyByNameLowerEn/De: exact name -> category key maps
+"""
+
+
 def main():
+        # Read source file once and parse PRODUCTS with a regex that matches tuple
+        # entries. This keeps generation deterministic and dependency-free.
     with open("generate_groceries.py", "r") as f:
         content = f.read()
 
@@ -16,6 +30,7 @@ def main():
 
     en_names = set()
     de_names = set()
+    # Lookup maps used at runtime for quick local category resolution.
     en_category_by_name = {}
     de_category_by_name = {}
 
@@ -46,6 +61,8 @@ def main():
 
         f.write("};\n")
 
+        # Exact lowercased name maps are generated to avoid remote category
+        # lookups for known products during add/edit flows.
         f.write("\nconst Map<String, String> groceryCategoryKeyByNameLowerEn = {\n")
         for name in sorted(en_category_by_name.keys()):
             escaped_name = name.replace("'", "\\'").replace("$", "\\$")
