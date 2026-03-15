@@ -41,7 +41,7 @@ class _AuthPageState extends State<AuthPage> {
             .rpc('ensure_user_household_and_default_lists');
 
         if (!mounted) return;
-        if (mounted) context.go('/home-page');
+        context.go('/home-page');
       } else {
         // Sign up
         final res = await Supabase.instance.client.auth.signUp(
@@ -59,16 +59,14 @@ class _AuthPageState extends State<AuthPage> {
         }
 
         if (!mounted) return;
-        if (mounted) {
-          if (res.session == null) {
+        if (res.session == null) {
             // Confirm-email projects return no session until verification.
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(AppLocalizations.of(context)!.authSignupSuccess),
             ));
             setState(() => _isLogin = true);
           } else {
-            context.go('/home-page');
-          }
+          context.go('/home-page');
         }
       }
     } on AuthException catch (error) {

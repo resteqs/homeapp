@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'home_tab.dart';
-import 'grocery_tab.dart'; // Import the new tab
+import 'grocery_tab.dart';
 import 'settings_tab.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 
-@NowaGenerated()
-
 /// Top-level authenticated shell with bottom navigation.
 class HomePage extends StatefulWidget {
-  @NowaGenerated({'loader': 'auto-constructor'})
   const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
+/// Manages the selected tab index for [HomePage].
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 

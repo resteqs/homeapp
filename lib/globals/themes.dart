@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 
 /// Centralized color tokens for the whole app.
 ///
@@ -127,65 +126,4 @@ ThemeData _buildLightTheme() {
   );
 }
 
-ThemeData _buildDarkTheme() {
-  const colorScheme = ColorScheme(
-    brightness: Brightness.dark,
-    primary: AppColors.accent,
-    onPrimary: AppColors.white,
-    primaryContainer: AppColors.blueLight,
-    onPrimaryContainer: AppColors.black,
-    secondary: AppColors.accentStrong,
-    onSecondary: AppColors.black,
-    secondaryContainer: AppColors.greenLight,
-    onSecondaryContainer: AppColors.black,
-    tertiary: AppColors.greenDark,
-    onTertiary: AppColors.black,
-    tertiaryContainer: AppColors.greenLight,
-    onTertiaryContainer: AppColors.black,
-    error: AppColors.redMain,
-    onError: AppColors.white,
-    errorContainer: AppColors.redLight,
-    onErrorContainer: AppColors.redMain,
-    surface: AppColors.surfaceDark,
-    onSurface: AppColors.textOnDark,
-    onSurfaceVariant: AppColors.gray700,
-    outline: AppColors.gray300,
-    outlineVariant: AppColors.gray200,
-    shadow: AppColors.black,
-    scrim: AppColors.black,
-    inverseSurface: AppColors.white,
-    onInverseSurface: AppColors.black,
-    inversePrimary: AppColors.accent,
-    surfaceTint: AppColors.accent,
-    surfaceContainerLowest: AppColors.white,
-    surfaceContainerLow: AppColors.white,
-    surfaceContainer: AppColors.gray100,
-    surfaceContainerHigh: AppColors.gray100,
-    surfaceContainerHighest: AppColors.gray100,
-  );
-
-  return ThemeData(
-    useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.pageBackgroundDark,
-    colorScheme: colorScheme,
-    progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: AppColors.blueMain,
-      linearTrackColor: AppColors.gray200,
-    ),
-    textTheme: const TextTheme().apply(
-      bodyColor: AppColors.textOnDark,
-      displayColor: AppColors.textOnDark,
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.pageBackgroundDark,
-      foregroundColor: AppColors.textOnDark,
-      elevation: 0,
-    ),
-  );
-}
-
-@NowaGenerated()
 final ThemeData lightTheme = _buildLightTheme();
-
-@NowaGenerated()
-final ThemeData darkTheme = _buildDarkTheme();

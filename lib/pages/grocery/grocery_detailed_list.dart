@@ -55,24 +55,23 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
   bool _selectionMode = false;
   final Set<String> _selectedItemIds = <String>{};
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   String get _locale {
     final languageCode = Localizations.localeOf(context).languageCode;
     return languageCode.isNotEmpty ? languageCode : 'en';
   }
 
+  /// Toggles the bought state of [item] via the repository.
   Future<void> _toggleItem(GroceryItem item) async {
     await widget.repository.toggleItem(item);
   }
 
+  /// Soft-deletes [item] via the repository.
   Future<void> _deleteItem(GroceryItem item) async {
     await widget.repository.deleteItem(item);
   }
 
+  /// Batch-deletes all bought items from the active list.
   Future<void> _deleteBoughtItems(List<GroceryItem> boughtItems) async {
     if (boughtItems.isEmpty) return;
     await widget.repository.deleteItems(boughtItems);
@@ -265,6 +264,9 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     );
   }
 
+  /// Groups items by their normalised category key and sorts each group
+  /// alphabetically, then sorts the groups themselves by the user's preferred
+  /// category order.
   List<_CategorySection> _groupItemsByCategory(
     BuildContext context,
     List<GroceryItem> items,
@@ -311,6 +313,7 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     return sections;
   }
 
+  /// Builds flat widget list from grouped sections for a sliver list.
   List<Widget> _buildGroupedItemWidgets(
     BuildContext context,
     List<_CategorySection> sections, {

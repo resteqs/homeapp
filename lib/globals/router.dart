@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:homeapp/pages/home_page.dart';
 import 'package:homeapp/pages/auth_page.dart';
 
@@ -26,7 +25,11 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-@NowaGenerated()
+/// Top-level router with auth-aware redirects.
+///
+/// Redirects unauthenticated users to `/auth` and authenticated users away
+/// from the auth screen. Listens to the Supabase auth state stream so
+/// transitions happen immediately on sign-in / sign-out.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home-page',
   redirect: (context, state) {

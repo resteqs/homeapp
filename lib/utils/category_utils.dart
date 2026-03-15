@@ -400,6 +400,7 @@ class CategoryUtils {
     }
   }
 
+  /// Returns the icon and color pair for a canonical [categoryKey].
   static CategoryVisual getCategoryVisual(String categoryKey) {
     switch (categoryKey) {
       case 'fruits_vegetables':

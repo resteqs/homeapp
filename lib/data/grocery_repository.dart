@@ -200,6 +200,8 @@ class GroceryRepository extends ChangeNotifier {
         await _localStore.getMeta('active_household_id');
   }
 
+  /// Kicks off a background category lookup via the local catalog and
+  /// updates the item if a better category is found.
   Future<void> _resolveCategoryInBackground(
     GroceryItem item,
     String name, {
@@ -222,6 +224,8 @@ class GroceryRepository extends ChangeNotifier {
     _scheduleSync();
   }
 
+  /// Looks up the localized category name for [itemName] in the generated
+  /// offline catalog. Returns null if no match is found.
   String? _lookupCategoryFromLocalCatalog(String itemName,
       {required String locale}) {
     final normalized = itemName.trim().toLowerCase();
@@ -241,6 +245,8 @@ class GroceryRepository extends ChangeNotifier {
     return _enCategoryNameFromKey(categoryKey);
   }
 
+  /// Attempts prefix/suffix sub-word matching against the catalog for
+  /// compound words (common in German, e.g. "Joghurtschokolade").
   String? _lookupCategoryKeyBySubword(
     String normalized,
     Map<String, String> categoryByName,
@@ -274,6 +280,7 @@ class GroceryRepository extends ChangeNotifier {
     return null;
   }
 
+  /// Returns the category from household custom items if the name matches.
   String? _lookupCategoryFromCustomItems(String itemName) {
     final normalized = itemName.trim().toLowerCase();
     if (normalized.isEmpty) return null;
@@ -286,6 +293,7 @@ class GroceryRepository extends ChangeNotifier {
     return null;
   }
 
+  /// Whether [itemName] is an exact match in the generated offline catalog.
   bool _isExactCatalogItem(String itemName) {
     final normalized = itemName.trim().toLowerCase();
     if (normalized.isEmpty) return false;
@@ -294,6 +302,8 @@ class GroceryRepository extends ChangeNotifier {
         groceryCategoryKeyByNameLowerDe.containsKey(normalized);
   }
 
+  /// Persists a new household custom item if the name is not already in the
+  /// offline catalog or the existing custom item list.
   Future<void> _upsertHouseholdCustomItemIfNeeded(
     String itemName, {
     required String category,
@@ -323,6 +333,7 @@ class GroceryRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Maps a canonical category key to its English display name.
   String? _enCategoryNameFromKey(String key) {
     switch (key) {
       case 'alcohol':
@@ -378,6 +389,7 @@ class GroceryRepository extends ChangeNotifier {
     }
   }
 
+  /// Maps a canonical category key to its German display name.
   String? _deCategoryNameFromKey(String key) {
     switch (key) {
       case 'alcohol':
@@ -460,6 +472,8 @@ class GroceryRepository extends ChangeNotifier {
         _remotePullCooldown;
   }
 
+  /// Keyword-based fallback for category resolution when neither the offline
+  /// catalog nor household custom items return a match.
   String _fallbackCategoryFromItemName(String itemName,
       {required String locale}) {
     final text = itemName.trim().toLowerCase();

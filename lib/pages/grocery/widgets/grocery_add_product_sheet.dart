@@ -4,6 +4,10 @@ import 'package:homeapp/models/grocery_item.dart';
 import 'package:homeapp/data/grocery_repository.dart';
 import 'package:homeapp/data/grocery_catalog.dart';
 
+/// Bottom sheet for searching, adding, and adjusting grocery items.
+///
+/// Shows offline catalog suggestions filtered by the user's locale and
+/// ranks them by prefix match, household custom items, and recency.
 class GroceryAddProductSheet extends StatefulWidget {
   final GroceryRepository repository;
   final String locale;
@@ -22,11 +26,8 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
   final TextEditingController _searchController = TextEditingController();
   List<String> _filteredRecommendations = [];
   final FocusNode _focusNode = FocusNode();
-  // Locale-specific offline catalog. Cached once in initState to avoid work
-  // on every keystroke.
+  /// Locale-specific offline catalog, cached once in initState.
   late final List<String> _catalog;
-  // Keeps canonical display names for lowercased user input.
-  final Map<String, String> _lowerToDisplayName = <String, String>{};
 
   late List<String> _baseRecommendations;
 
@@ -109,9 +110,6 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     _catalog = List<String>.from(
       groceryCatalog[widget.locale] ?? groceryCatalog['en'] ?? const <String>[],
     );
-    for (final name in _catalog) {
-      _lowerToDisplayName[name.toLowerCase()] = name;
-    }
 
     // Set base recommendations depending on locale
     if (widget.locale == 'de') {
@@ -200,13 +198,12 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       .map((item) => item.name.toLowerCase())
       .toSet();
 
+  /// Returns the active (not bought) list item matching [name], or null.
   GroceryItem? _getItemFromList(String name) {
-    try {
-      return widget.repository.items.firstWhere((item) =>
-          item.name.toLowerCase() == name.toLowerCase() && !item.isBought);
-    } catch (e) {
-      return null;
-    }
+    final lower = name.toLowerCase();
+    return widget.repository.items
+        .where((item) => item.name.toLowerCase() == lower && !item.isBought)
+        .firstOrNull;
   }
 
   String _capitalizeFirstLetter(String value) {

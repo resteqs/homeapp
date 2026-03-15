@@ -141,6 +141,7 @@ class LocalGroceryStore {
     return false;
   }
 
+  /// Stores a key-value pair in the local metadata table.
   Future<void> setMeta(String key, String value) async {
     final db = await database;
     await db.insert(
@@ -150,6 +151,7 @@ class LocalGroceryStore {
     );
   }
 
+  /// Retrieves a metadata value by [key], or null if not found.
   Future<String?> getMeta(String key) async {
     final db = await database;
     final rows = await db.query(
@@ -162,6 +164,7 @@ class LocalGroceryStore {
     return rows.first['value']?.toString();
   }
 
+  /// Returns all non-deleted grocery items for [listId].
   Future<List<GroceryItem>> getItems(String listId) async {
     final db = await database;
     final rows = await db.query(
@@ -173,6 +176,7 @@ class LocalGroceryStore {
     return rows.map(GroceryItem.fromMap).toList();
   }
 
+  /// Returns all household custom items for [householdId].
   Future<List<HouseholdCustomItem>> getCustomItems(String householdId) async {
     final db = await database;
     final rows = await db.query(
@@ -184,6 +188,7 @@ class LocalGroceryStore {
     return rows.map(HouseholdCustomItem.fromMap).toList();
   }
 
+  /// Returns items with pending upsert status for the given [listId].
   Future<List<GroceryItem>> getPendingUpserts(String listId) async {
     final db = await database;
     final rows = await db.query(
@@ -195,6 +200,7 @@ class LocalGroceryStore {
     return rows.map(GroceryItem.fromMap).toList();
   }
 
+  /// Returns items marked for deletion for the given [listId].
   Future<List<GroceryItem>> getPendingDeletes(String listId) async {
     final db = await database;
     final rows = await db.query(
@@ -219,6 +225,7 @@ class LocalGroceryStore {
     return rows.map(HouseholdCustomItem.fromMap).toList();
   }
 
+  /// Inserts or replaces a single grocery item.
   Future<void> upsertItem(GroceryItem item) async {
     final db = await database;
     await db.insert(
@@ -228,6 +235,7 @@ class LocalGroceryStore {
     );
   }
 
+  /// Inserts or replaces multiple grocery items in a single batch.
   Future<void> upsertItems(List<GroceryItem> items) async {
     final db = await database;
     final batch = db.batch();
@@ -241,6 +249,7 @@ class LocalGroceryStore {
     await batch.commit(noResult: true);
   }
 
+  /// Inserts or replaces a single household custom item.
   Future<void> upsertCustomItem(HouseholdCustomItem item) async {
     final db = await database;
     await db.insert(
@@ -250,33 +259,8 @@ class LocalGroceryStore {
     );
   }
 
-  Future<void> upsertCustomItems(List<HouseholdCustomItem> items) async {
-    if (items.isEmpty) return;
 
-    final db = await database;
-    final batch = db.batch();
-    for (final item in items) {
-      batch.insert(
-        'local_household_custom_items',
-        item.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    }
-    await batch.commit(noResult: true);
-  }
-
-  Future<void> markUpsertSynced(String id) async {
-    final db = await database;
-    // Guard against race conditions: only mark rows that are still pending
-    // upserts. If a row changed to pending_delete meanwhile, do not override it.
-    await db.update(
-      'local_grocery_items',
-      {'sync_status': 'synced'},
-      where: 'id = ? AND sync_status = ? AND deleted_at IS NULL',
-      whereArgs: [id, 'pending_upsert'],
-    );
-  }
-
+  /// Marks a batch of grocery items as synced (upserts only).
   Future<void> markUpsertsSynced(List<String> ids) async {
     if (ids.isEmpty) return;
 
@@ -303,6 +287,7 @@ class LocalGroceryStore {
     );
   }
 
+  /// Deletes a single grocery item by [id].
   Future<void> deleteItemById(String id) async {
     final db = await database;
     await db.delete(
@@ -312,6 +297,7 @@ class LocalGroceryStore {
     );
   }
 
+  /// Deletes multiple grocery items by their IDs in a single operation.
   Future<void> deleteItemsByIds(List<String> ids) async {
     if (ids.isEmpty) return;
 
@@ -324,21 +310,7 @@ class LocalGroceryStore {
     );
   }
 
-  Future<void> updateItemListId(String itemId, String newListId) async {
-    final db = await database;
-    await db.update(
-      'local_grocery_items',
-      {
-        'list_id': newListId,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-        'sync_status': 'pending_upsert',
-        'deleted_at': null,
-      },
-      where: 'id = ?',
-      whereArgs: [itemId],
-    );
-  }
-
+  /// Deletes all local grocery items belonging to [listId].
   Future<void> deleteItemsByListId(String listId) async {
     final db = await database;
     await db.delete(
@@ -348,6 +320,9 @@ class LocalGroceryStore {
     );
   }
 
+  /// Reconciles locally cached items for [listId] with a fresh remote
+  /// snapshot. Synced rows not present in [items] are removed; pending
+  /// local changes are preserved.
   Future<void> mergeRemoteItems(String listId, List<GroceryItem> items) async {
     final db = await database;
     await db.transaction((txn) async {
@@ -386,6 +361,7 @@ class LocalGroceryStore {
     });
   }
 
+  /// Same as [mergeRemoteItems] but for household custom items.
   Future<void> mergeRemoteCustomItems(
     String householdId,
     List<HouseholdCustomItem> items,

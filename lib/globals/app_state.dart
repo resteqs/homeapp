@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:provider/provider.dart';
 import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/main.dart';
 import 'package:homeapp/utils/category_utils.dart';
 import 'dart:ui' as ui;
 
-@NowaGenerated()
 
 /// Global app state for theme and locale.
 ///
