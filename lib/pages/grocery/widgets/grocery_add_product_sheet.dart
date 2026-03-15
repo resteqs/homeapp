@@ -22,26 +22,53 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
   final TextEditingController _searchController = TextEditingController();
   List<String> _filteredRecommendations = [];
   final FocusNode _focusNode = FocusNode();
+  late final List<String> _catalog;
+  final Map<String, String> _lowerToDisplayName = <String, String>{};
 
   late List<String> _baseRecommendations;
 
   @override
   void initState() {
     super.initState();
-    
+
+    _catalog = List<String>.from(
+      groceryCatalog[widget.locale] ?? groceryCatalog['en'] ?? const <String>[],
+    );
+    for (final name in _catalog) {
+      _lowerToDisplayName[name.toLowerCase()] = name;
+    }
+
     // Set base recommendations depending on locale
     if (widget.locale == 'de') {
       _baseRecommendations = [
-        'Milch', 'Eier', 'Brot', 'Toilettenpapier', 'Wasser',
-        'Tomaten', 'Bier', 'Kaffee', 'Sahne', 'Joghurt', 'Ketchup',
+        'Milch',
+        'Eier',
+        'Brot',
+        'Toilettenpapier',
+        'Wasser',
+        'Tomaten',
+        'Bier',
+        'Kaffee',
+        'Sahne',
+        'Joghurt',
+        'Ketchup',
       ];
     } else {
       _baseRecommendations = [
-        'Milk', 'Eggs', 'Bread', 'Toilet Paper', 'Water',
-        'Tomatoes', 'Beer', 'Coffee', 'Cream', 'Yogurt', 'Ketchup',
+        'Milk',
+        'Eggs',
+        'Bread',
+        'Toilet Paper',
+        'Water',
+        'Tomatoes',
+        'Beer',
+        'Coffee',
+        'Cream',
+        'Yogurt',
+        'Ketchup',
       ];
     }
-    
+
     _filteredRecommendations = List.from(_baseRecommendations);
     _searchController.addListener(_onSearchChanged);
   }
@@ -60,9 +87,7 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
       if (query.isEmpty) {
         _filteredRecommendations = List.from(_baseRecommendations);
       } else {
-        final catalog = groceryCatalog[widget.locale] ?? groceryCatalog['en'] ?? [];
-        
-        final matches = catalog
+        final matches = _catalog
             .where((item) => item.toLowerCase().contains(query))
             .toList();
 
@@ -88,10 +113,10 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     });
   }
 
-  bool _isItemInList(String name) {
-    return widget.repository.items.any((item) =>
-        item.name.toLowerCase() == name.toLowerCase() && !item.isBought);
-  }
+  Set<String> get _activeItemNamesLower => widget.repository.items
+      .where((item) => !item.isBought)
+      .map((item) => item.name.toLowerCase())
+      .toSet();
 
   GroceryItem? _getItemFromList(String name) {
     try {
@@ -103,11 +128,16 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
   }
 
   void _toggleProduct(String name) async {
-    final item = _getItemFromList(name);
+    final normalized = name.trim();
+    if (normalized.isEmpty) return;
+
+    final canonical =
+        _lowerToDisplayName[normalized.toLowerCase()] ?? normalized;
+    final item = _getItemFromList(canonical);
     if (item != null) {
       await widget.repository.deleteItem(item);
     } else {
-      await widget.repository.addItem(name, locale: widget.locale);
+      await widget.repository.addItem(canonical, locale: widget.locale);
     }
   }
 
@@ -117,6 +147,8 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
     return AnimatedBuilder(
       animation: widget.repository,
       builder: (context, _) {
+        final activeItemNamesLower = _activeItemNamesLower;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
@@ -151,7 +183,8 @@ class _GroceryAddProductSheetState extends State<GroceryAddProductSheet> {
             itemCount: _filteredRecommendations.length,
             itemBuilder: (context, index) {
               final product = _filteredRecommendations[index];
-              final isInList = _isItemInList(product);
+              final isInList =
+                  activeItemNamesLower.contains(product.toLowerCase());
 
               return ListTile(
                 leading: isInList

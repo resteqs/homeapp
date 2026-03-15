@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:homeapp/data/grocery_catalog.dart';
 import 'package:homeapp/data/local_grocery_store.dart';
 import 'package:homeapp/models/grocery_item.dart';
 
@@ -24,7 +25,8 @@ class GroceryRepository extends ChangeNotifier {
   final LocalGroceryStore _localStore;
   final Uuid _uuid = const Uuid();
   final Map<String, String> _categoryCache = <String, String>{};
-  final Map<String, Future<String>> _categoryLookups = <String, Future<String>>{};
+  final Map<String, Future<String>> _categoryLookups =
+      <String, Future<String>>{};
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
@@ -38,8 +40,10 @@ class GroceryRepository extends ChangeNotifier {
   String? _lastError;
   String? _listId;
   DateTime? _lastRemotePullAt;
+  Timer? _syncDebounceTimer;
 
   static const Duration _remotePullCooldown = Duration(seconds: 15);
+  static const Duration _syncDebounceWindow = Duration(milliseconds: 350);
 
   List<GroceryItem> get items => _items;
   bool get isLoading => _isLoading;
@@ -54,7 +58,8 @@ class GroceryRepository extends ChangeNotifier {
     try {
       // Backend bootstrap guarantees profile, household membership, and at least
       // one grocery list before any data read/write.
-      final bootstrap = await _supabase.rpc('ensure_user_household_and_default_lists');
+      final bootstrap =
+          await _supabase.rpc('ensure_user_household_and_default_lists');
       final resolvedListId = bootstrap['grocery_list_id']?.toString();
       if (resolvedListId == null || resolvedListId.isEmpty) {
         throw StateError('No grocery list available for this user.');
@@ -105,7 +110,8 @@ class GroceryRepository extends ChangeNotifier {
   }
 
   void _upsertLocalItemInMemory(GroceryItem item) {
-    final nextItems = _items.where((existing) => existing.id != item.id).toList();
+    final nextItems =
+        _items.where((existing) => existing.id != item.id).toList();
     if (item.deletedAt == null && item.listId == _listId) {
       nextItems.add(item);
     }
@@ -123,7 +129,8 @@ class GroceryRepository extends ChangeNotifier {
     return '${locale.toLowerCase()}::${itemName.trim().toLowerCase()}';
   }
 
-  Future<String> _lookupCategoryCached(String itemName, {required String locale}) {
+  Future<String> _lookupCategoryCached(String itemName,
+      {required String locale}) {
     final key = _normalizedCategoryLookupKey(itemName, locale);
     final cached = _categoryCache[key];
     if (cached != null) {
@@ -153,8 +160,26 @@ class GroceryRepository extends ChangeNotifier {
     String name, {
     required String locale,
   }) async {
+    // Resolve from local catalog first to avoid unnecessary remote DB calls.
+    final localCategory = _lookupCategoryFromLocalCatalog(name, locale: locale);
+    if (localCategory != null) {
+      if (localCategory != item.category) {
+        final updated = item.copyWith(
+          category: localCategory,
+          updatedAt: DateTime.now().toUtc(),
+          syncStatus: 'pending_upsert',
+        );
+        await _localStore.upsertItem(updated);
+        _upsertLocalItemInMemory(updated);
+        notifyListeners();
+        _scheduleSync();
+      }
+      return;
+    }
+
     try {
-      final resolvedCategory = await _lookupCategoryCached(name, locale: locale);
+      final resolvedCategory =
+          await _lookupCategoryCached(name, locale: locale);
       if (resolvedCategory == item.category) {
         return;
       }
@@ -167,10 +192,83 @@ class GroceryRepository extends ChangeNotifier {
       await _localStore.upsertItem(updated);
       _upsertLocalItemInMemory(updated);
       notifyListeners();
-      unawaited(sync());
+      _scheduleSync();
     } catch (_) {
       // Keep the fallback category when remote lookup is unavailable.
     }
+  }
+
+  String? _lookupCategoryFromLocalCatalog(String itemName,
+      {required String locale}) {
+    final normalized = itemName.trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+
+    final categoryKey = locale == 'de'
+        ? groceryCategoryKeyByNameLowerDe[normalized]
+        : groceryCategoryKeyByNameLowerEn[normalized];
+    if (categoryKey == null) return null;
+
+    if (locale == 'de') {
+      return _deCategoryNameFromKey(categoryKey);
+    }
+    return _enCategoryNameFromKey(categoryKey);
+  }
+
+  String? _enCategoryNameFromKey(String key) {
+    switch (key) {
+      case 'fruits_vegetables':
+        return 'Fruits & Vegetables';
+      case 'dairy':
+        return 'Dairy';
+      case 'bakery':
+        return 'Bakery';
+      case 'drinks':
+        return 'Drinks';
+      case 'snacks_sweets':
+        return 'Snacks & Sweets';
+      case 'care_cleaning':
+        return 'Care & Cleaning';
+      case 'meat_fish':
+        return 'Meat & Fish';
+      default:
+        return null;
+    }
+  }
+
+  String? _deCategoryNameFromKey(String key) {
+    switch (key) {
+      case 'fruits_vegetables':
+        return 'Obst & Gemüse';
+      case 'dairy':
+        return 'Milchprodukte';
+      case 'bakery':
+        return 'Bäckerei';
+      case 'drinks':
+        return 'Getränke';
+      case 'snacks_sweets':
+        return 'Snacks & Süßes';
+      case 'care_cleaning':
+        return 'Pflege & Reinigung';
+      case 'meat_fish':
+        return 'Fleisch & Fisch';
+      default:
+        return null;
+    }
+  }
+
+  void _scheduleSync({bool forceRemotePull = false}) {
+    if (forceRemotePull) {
+      _syncDebounceTimer?.cancel();
+      _syncDebounceTimer = null;
+      unawaited(sync(forceRemotePull: true));
+      return;
+    }
+
+    _syncDebounceTimer?.cancel();
+    _syncDebounceTimer = Timer(_syncDebounceWindow, () {
+      _syncDebounceTimer = null;
+      unawaited(sync());
+    });
   }
 
   bool _shouldPullRemote(bool forceRemotePull) {
@@ -198,8 +296,8 @@ class GroceryRepository extends ChangeNotifier {
           .limit(1);
 
       if (exactResults.isNotEmpty) {
-        final catTranslations =
-            exactResults[0]['categories']['name_translations'] as Map<String, dynamic>?;
+        final catTranslations = exactResults[0]['categories']
+            ['name_translations'] as Map<String, dynamic>?;
         // Return the localized category name, falling back through en then key.
         return catTranslations?[locale]?.toString() ??
             catTranslations?['en']?.toString() ??
@@ -213,8 +311,8 @@ class GroceryRepository extends ChangeNotifier {
           .limit(1);
 
       if (fuzzyResults.isNotEmpty) {
-        final catTranslations =
-            fuzzyResults[0]['categories']['name_translations'] as Map<String, dynamic>?;
+        final catTranslations = fuzzyResults[0]['categories']
+            ['name_translations'] as Map<String, dynamic>?;
         return catTranslations?[locale]?.toString() ??
             catTranslations?['en']?.toString() ??
             'Other';
@@ -225,27 +323,113 @@ class GroceryRepository extends ChangeNotifier {
     return _fallbackCategoryFromItemName(itemName, locale: locale);
   }
 
-  String _fallbackCategoryFromItemName(String itemName, {required String locale}) {
+  String _fallbackCategoryFromItemName(String itemName,
+      {required String locale}) {
     final text = itemName.trim().toLowerCase();
     if (text.isEmpty) return locale == 'de' ? 'Sonstiges' : 'Other';
 
-    const produce = ['apple', 'banana', 'orange', 'tomato', 'onion', 'carrot', 'salad', 'obst', 'gemu', 'kartoffel'];
-    const dairy = ['milk', 'cheese', 'yogurt', 'butter', 'egg', 'milch', 'kaese', 'käse', 'joghurt', 'butter'];
-    const bakery = ['bread', 'bun', 'toast', 'flour', 'cake', 'brot', 'bröt', 'broet', 'mehl', 'kuchen'];
-    const drinks = ['water', 'juice', 'cola', 'soda', 'coffee', 'tea', 'bier', 'wein', 'saft', 'getra', 'getränk'];
-    const snacks = ['chips', 'cookie', 'chocolate', 'candy', 'snack', 'keks', 'schoko', 'suss', 'süß'];
-    const hygiene = ['soap', 'shampoo', 'detergent', 'toilet', 'clean', 'seife', 'shampoo', 'wasch', 'hygiene', 'pflege'];
-    const meatFish = ['meat', 'chicken', 'beef', 'fish', 'ham', 'fleisch', 'huhn', 'rind', 'fisch', 'wurst'];
+    const produce = [
+      'apple',
+      'banana',
+      'orange',
+      'tomato',
+      'onion',
+      'carrot',
+      'salad',
+      'obst',
+      'gemu',
+      'kartoffel'
+    ];
+    const dairy = [
+      'milk',
+      'cheese',
+      'yogurt',
+      'butter',
+      'egg',
+      'milch',
+      'kaese',
+      'käse',
+      'joghurt',
+      'butter'
+    ];
+    const bakery = [
+      'bread',
+      'bun',
+      'toast',
+      'flour',
+      'cake',
+      'brot',
+      'bröt',
+      'broet',
+      'mehl',
+      'kuchen'
+    ];
+    const drinks = [
+      'water',
+      'juice',
+      'cola',
+      'soda',
+      'coffee',
+      'tea',
+      'bier',
+      'wein',
+      'saft',
+      'getra',
+      'getränk'
+    ];
+    const snacks = [
+      'chips',
+      'cookie',
+      'chocolate',
+      'candy',
+      'snack',
+      'keks',
+      'schoko',
+      'suss',
+      'süß'
+    ];
+    const hygiene = [
+      'soap',
+      'shampoo',
+      'detergent',
+      'toilet',
+      'clean',
+      'seife',
+      'shampoo',
+      'wasch',
+      'hygiene',
+      'pflege'
+    ];
+    const meatFish = [
+      'meat',
+      'chicken',
+      'beef',
+      'fish',
+      'ham',
+      'fleisch',
+      'huhn',
+      'rind',
+      'fisch',
+      'wurst'
+    ];
 
     bool hasAny(List<String> keywords) => keywords.any(text.contains);
 
-    if (hasAny(produce)) return locale == 'de' ? 'Obst & Gemüse' : 'Fruits & Vegetables';
+    if (hasAny(produce)) {
+      return locale == 'de' ? 'Obst & Gemüse' : 'Fruits & Vegetables';
+    }
     if (hasAny(dairy)) return locale == 'de' ? 'Milchprodukte' : 'Dairy';
     if (hasAny(bakery)) return locale == 'de' ? 'Bäckerei' : 'Bakery';
     if (hasAny(drinks)) return locale == 'de' ? 'Getränke' : 'Drinks';
-    if (hasAny(snacks)) return locale == 'de' ? 'Snacks & Süßes' : 'Snacks & Sweets';
-    if (hasAny(hygiene)) return locale == 'de' ? 'Pflege & Reinigung' : 'Care & Cleaning';
-    if (hasAny(meatFish)) return locale == 'de' ? 'Fleisch & Fisch' : 'Meat & Fish';
+    if (hasAny(snacks)) {
+      return locale == 'de' ? 'Snacks & Süßes' : 'Snacks & Sweets';
+    }
+    if (hasAny(hygiene)) {
+      return locale == 'de' ? 'Pflege & Reinigung' : 'Care & Cleaning';
+    }
+    if (hasAny(meatFish)) {
+      return locale == 'de' ? 'Fleisch & Fisch' : 'Meat & Fish';
+    }
     return locale == 'de' ? 'Sonstiges' : 'Other';
   }
 
@@ -277,7 +461,7 @@ class GroceryRepository extends ChangeNotifier {
     _upsertLocalItemInMemory(item);
     notifyListeners();
     unawaited(_resolveCategoryInBackground(item, name, locale: locale));
-    unawaited(sync());
+    _scheduleSync();
   }
 
   Future<void> toggleItem(GroceryItem item) async {
@@ -291,7 +475,7 @@ class GroceryRepository extends ChangeNotifier {
     await _localStore.upsertItem(updated);
     _upsertLocalItemInMemory(updated);
     notifyListeners();
-    unawaited(sync());
+    _scheduleSync();
   }
 
   Future<void> deleteItem(GroceryItem item) async {
@@ -306,22 +490,24 @@ class GroceryRepository extends ChangeNotifier {
     await _localStore.upsertItem(updated);
     _removeLocalItemFromMemory(item.id);
     notifyListeners();
-    unawaited(sync());
+    _scheduleSync();
   }
 
   Future<void> deleteItems(List<GroceryItem> items) async {
     final now = DateTime.now().toUtc();
-    final updatedItems = items.map((item) => item.copyWith(
-      updatedAt: now,
-      deletedAt: now,
-      syncStatus: 'pending_delete',
-    )).toList();
+    final updatedItems = items
+        .map((item) => item.copyWith(
+              updatedAt: now,
+              deletedAt: now,
+              syncStatus: 'pending_delete',
+            ))
+        .toList();
 
     await _localStore.upsertItems(updatedItems);
     final deletedIds = updatedItems.map((item) => item.id).toSet();
     _setItems(_items.where((item) => !deletedIds.contains(item.id)).toList());
     notifyListeners();
-    unawaited(sync());
+    _scheduleSync();
   }
 
   Future<void> updateItemDetails(
@@ -332,7 +518,8 @@ class GroceryRepository extends ChangeNotifier {
     String locale = 'en',
   }) async {
     final normalizedName = newName.trim();
-    final category = _fallbackCategoryFromItemName(normalizedName, locale: locale);
+    final category =
+        _fallbackCategoryFromItemName(normalizedName, locale: locale);
 
     final updated = item.copyWith(
       name: normalizedName,
@@ -346,14 +533,13 @@ class GroceryRepository extends ChangeNotifier {
     await _localStore.upsertItem(updated);
     _upsertLocalItemInMemory(updated);
     notifyListeners();
-    unawaited(_resolveCategoryInBackground(updated, normalizedName, locale: locale));
-    unawaited(sync());
+    unawaited(
+        _resolveCategoryInBackground(updated, normalizedName, locale: locale));
+    _scheduleSync();
   }
 
   Future<List<Map<String, dynamic>>> fetchGroceryLists() async {
-    final response = await _supabase
-        .from('grocery_lists')
-        .select('''
+    final response = await _supabase.from('grocery_lists').select('''
           id,
           name,
           grocery_list_items (
@@ -361,8 +547,7 @@ class GroceryRepository extends ChangeNotifier {
             is_bought,
             deleted_at
           )
-        ''')
-        .order('created_at');
+        ''').order('created_at');
 
     return List<Map<String, dynamic>>.from(response);
   }
@@ -371,10 +556,11 @@ class GroceryRepository extends ChangeNotifier {
     _listId = id;
     await _localStore.setMeta('active_grocery_list_id', id);
     await refreshFromLocal();
-    unawaited(sync(forceRemotePull: true));
+    _scheduleSync(forceRemotePull: true);
   }
 
-  Future<void> moveItemsToList(List<GroceryItem> items, String targetListId) async {
+  Future<void> moveItemsToList(
+      List<GroceryItem> items, String targetListId) async {
     if (items.isEmpty) return;
 
     final movedItems = items
@@ -392,7 +578,7 @@ class GroceryRepository extends ChangeNotifier {
     final movedIds = movedItems.map((item) => item.id).toSet();
     _setItems(_items.where((item) => !movedIds.contains(item.id)).toList());
     notifyListeners();
-    unawaited(sync());
+    _scheduleSync();
   }
 
   Future<void> deleteList(String listId) async {
@@ -427,24 +613,24 @@ class GroceryRepository extends ChangeNotifier {
       final pendingUpserts = await _localStore.getPendingUpserts(id);
       if (pendingUpserts.isNotEmpty) {
         await _supabase.from('grocery_list_items').upsert(
-          pendingUpserts
-              .map(
-                (item) => {
-                  'id': item.id,
-                  'list_id': item.listId,
-                  'name': item.name,
-                  'category': item.category,
-                  'is_bought': item.isBought,
-                  'updated_at': item.updatedAt.toIso8601String(),
-                  'deleted_at': null,
-                  'updated_by': _supabase.auth.currentUser?.id,
-                  'quantity': item.quantity,
-                  'unit': item.unit,
-                },
-              )
-              .toList(growable: false),
-          onConflict: 'id',
-        );
+              pendingUpserts
+                  .map(
+                    (item) => {
+                      'id': item.id,
+                      'list_id': item.listId,
+                      'name': item.name,
+                      'category': item.category,
+                      'is_bought': item.isBought,
+                      'updated_at': item.updatedAt.toIso8601String(),
+                      'deleted_at': null,
+                      'updated_by': _supabase.auth.currentUser?.id,
+                      'quantity': item.quantity,
+                      'unit': item.unit,
+                    },
+                  )
+                  .toList(growable: false),
+              onConflict: 'id',
+            );
         await _localStore.markUpsertsSynced(
           pendingUpserts.map((item) => item.id).toList(growable: false),
         );
@@ -452,7 +638,8 @@ class GroceryRepository extends ChangeNotifier {
 
       final pendingDeletes = await _localStore.getPendingDeletes(id);
       if (pendingDeletes.isNotEmpty) {
-        final deleteIds = pendingDeletes.map((item) => item.id).toList(growable: false);
+        final deleteIds =
+            pendingDeletes.map((item) => item.id).toList(growable: false);
         await _supabase
             .from('grocery_list_items')
             .delete()
@@ -463,13 +650,15 @@ class GroceryRepository extends ChangeNotifier {
       if (shouldPullRemote) {
         final remote = await _supabase
             .from('grocery_list_items')
-            .select('id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
+            .select(
+                'id, list_id, name, category, is_bought, quantity, unit, updated_at, deleted_at')
             .eq('list_id', id)
             .isFilter('deleted_at', null)
             .order('updated_at', ascending: false);
 
         final remoteItems = (remote as List<dynamic>)
-            .map((row) => GroceryItem.fromMap({...row as Map<String, dynamic>, 'sync_status': 'synced'}))
+            .map((row) => GroceryItem.fromMap(
+                {...row as Map<String, dynamic>, 'sync_status': 'synced'}))
             .toList(growable: false);
 
         await _localStore.mergeRemoteItems(id, remoteItems);
@@ -498,6 +687,7 @@ class GroceryRepository extends ChangeNotifier {
   @override
   void dispose() {
     _connectivitySub?.cancel();
+    _syncDebounceTimer?.cancel();
     super.dispose();
   }
 }
