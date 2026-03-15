@@ -110,6 +110,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsLanguage => 'Sprache';
 
   @override
+  String get settingsGroceryCategoryOrder =>
+      'Reihenfolge der Einkaufskategorien';
+
+  @override
+  String get settingsGroceryCategoryOrderHint =>
+      'Ziehe die Kategorien so, wie du normalerweise durch den Supermarkt gehst.';
+
+  @override
   String get langEnglish => 'English';
 
   @override

@@ -110,6 +110,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguage => 'Language';
 
   @override
+  String get settingsGroceryCategoryOrder => 'Grocery category order';
+
+  @override
+  String get settingsGroceryCategoryOrderHint =>
+      'Drag categories to match the order you usually walk through the supermarket.';
+
+  @override
   String get langEnglish => 'English';
 
   @override

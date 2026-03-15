@@ -32,6 +32,8 @@
     "settingsLoggingOut": "Abmelden...",
     "settingsAttributions": "Namennennung",
     "settingsLanguage": "Sprache",
+    "settingsGroceryCategoryOrder": "Reihenfolge der Einkaufskategorien",
+    "settingsGroceryCategoryOrderHint": "Ziehe die Kategorien so, wie du normalerweise durch den Supermarkt gehst.",
     "langEnglish": "English",
     "langGerman": "Deutsch",
     "groceryItemsSelected": "{count} Artikel ausgewählt",

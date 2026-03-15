@@ -22,6 +22,37 @@ class CategoryVisual {
 class CategoryUtils {
   static final Map<String, String> _cache = {};
 
+  /// Default category order based on a typical German supermarket path:
+  /// produce first, then bakery/fresh counters, pantry aisles, beverages,
+  /// and finally household/non-food sections.
+  static const List<String> defaultCategoryOrder = <String>[
+    'fruits_vegetables',
+    'bakery',
+    'dairy_eggs',
+    'meat',
+    'fish',
+    'ready_meals',
+    'frozen_foods',
+    'dry_goods',
+    'baking_ingredients',
+    'canned_goods',
+    'condiments_spices',
+    'snacks_sweets',
+    'coffee_tea',
+    'beverages',
+    'alcohol',
+    'baby',
+    'cosmetics_hygiene',
+    'health',
+    'cleaning_laundry',
+    'home_garden',
+    'pets',
+    'stationery',
+    'electronics',
+    'clothing',
+    'other',
+  ];
+
   /// The set of canonical category keys used throughout the app.
   static const Set<String> knownKeys = {
     'alcohol',
@@ -50,6 +81,28 @@ class CategoryUtils {
     'frozen_foods',
     'dry_goods',
   };
+
+  /// Normalises a persisted category order by removing unknown keys,
+  /// de-duplicating entries, and appending any missing known categories.
+  static List<String> normalizedCategoryOrder(Iterable<String>? rawOrder) {
+    final normalized = <String>[];
+    final seen = <String>{};
+
+    for (final categoryKey in rawOrder ?? const <String>[]) {
+      if (!knownKeys.contains(categoryKey) || !seen.add(categoryKey)) {
+        continue;
+      }
+      normalized.add(categoryKey);
+    }
+
+    for (final categoryKey in defaultCategoryOrder) {
+      if (seen.add(categoryKey)) {
+        normalized.add(categoryKey);
+      }
+    }
+
+    return normalized;
+  }
 
   /// Normalises a raw category value (DB key, localized name, or legacy
   /// string) to a canonical category key.

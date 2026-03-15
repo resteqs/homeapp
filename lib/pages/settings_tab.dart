@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/globals/app_state.dart';
+import 'package:homeapp/utils/category_utils.dart';
 
 /// Settings tab for language, attribution, and sign-out actions.
 class SettingsTab extends StatefulWidget {
@@ -37,31 +39,29 @@ class _SettingsTabState extends State<SettingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = AppState.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final categoryOrder = appState.categoryOrder;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: ListView(
         children: [
           Text(
-            AppLocalizations.of(context)!.settingsTitle,
+            l10n.settingsTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.of(context)!.settingsLanguage,
-                  style: const TextStyle(fontSize: 16)),
+              Text(l10n.settingsLanguage, style: const TextStyle(fontSize: 16)),
               SegmentedButton<String>(
                 segments: [
-                  ButtonSegment(
-                      value: 'en',
-                      label: Text(AppLocalizations.of(context)!.langEnglish)),
-                  ButtonSegment(
-                      value: 'de',
-                      label: Text(AppLocalizations.of(context)!.langGerman)),
+                  ButtonSegment(value: 'en', label: Text(l10n.langEnglish)),
+                  ButtonSegment(value: 'de', label: Text(l10n.langGerman)),
                 ],
-                selected: {AppState.of(context).locale.languageCode},
+                selected: {appState.locale.languageCode},
                 onSelectionChanged: (Set<String> newSelection) {
                   AppState.of(context, listen: false)
                       .setLocale(Locale(newSelection.first));
@@ -69,18 +69,81 @@ class _SettingsTabState extends State<SettingsTab> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Text(
+            l10n.settingsGroceryCategoryOrder,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.settingsGroceryCategoryOrderHint,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 12),
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            buildDefaultDragHandles: false,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: categoryOrder.length,
+            onReorder: (oldIndex, newIndex) {
+              final nextOrder = List<String>.from(categoryOrder);
+              if (newIndex > oldIndex) {
+                newIndex -= 1;
+              }
+
+              final movedCategory = nextOrder.removeAt(oldIndex);
+              nextOrder.insert(newIndex, movedCategory);
+              AppState.of(context, listen: false).setCategoryOrder(nextOrder);
+            },
+            itemBuilder: (context, index) {
+              final categoryKey = categoryOrder[index];
+              final categoryVisual = CategoryUtils.getCategoryVisual(categoryKey);
+
+              return Card(
+                key: ValueKey(categoryKey),
+                margin: EdgeInsets.only(
+                  bottom: index == categoryOrder.length - 1 ? 0 : 8,
+                ),
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  leading: CircleAvatar(
+                    backgroundColor:
+                        categoryVisual.color.withValues(alpha: 0.18),
+                    child: FaIcon(
+                      categoryVisual.icon,
+                      size: 16,
+                      color: categoryVisual.color,
+                    ),
+                  ),
+                  title: Text(
+                    CategoryUtils.localizedCategoryName(context, categoryKey),
+                  ),
+                  trailing: ReorderableDragStartListener(
+                    index: index,
+                    child: Icon(
+                      Icons.drag_handle,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           ListTile(
-            title: Text(AppLocalizations.of(context)!.settingsAttributions),
+            title: Text(l10n.settingsAttributions),
             leading: const Icon(Icons.info_outline),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title:
-                      Text(AppLocalizations.of(context)!.settingsAttributions),
+                  title: Text(l10n.settingsAttributions),
                   content: const SelectableText(
-                      'Icons by Icons8 (https://icons8.com)'),
+                    'Icons by Icons8 (https://icons8.com)',
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -95,9 +158,9 @@ class _SettingsTabState extends State<SettingsTab> {
           ElevatedButton.icon(
             onPressed: _isSigningOut ? null : _signOut,
             icon: const Icon(Icons.logout),
-            label: Text(_isSigningOut
-                ? AppLocalizations.of(context)!.settingsLoggingOut
-                : AppLocalizations.of(context)!.settingsLogout),
+            label: Text(
+              _isSigningOut ? l10n.settingsLoggingOut : l10n.settingsLogout,
+            ),
           ),
         ],
       ),

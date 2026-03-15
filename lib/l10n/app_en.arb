@@ -46,6 +46,8 @@
     "settingsLoggingOut": "Signing out...",
     "settingsAttributions": "Attributions",
     "settingsLanguage": "Language",
+    "settingsGroceryCategoryOrder": "Grocery category order",
+    "settingsGroceryCategoryOrderHint": "Drag categories to match the order you usually walk through the supermarket.",
     "langEnglish": "English",
     "langGerman": "Deutsch",
     "groceryItemsSelected": "{count} items selected",

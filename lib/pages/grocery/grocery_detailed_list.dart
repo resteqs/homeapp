@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homeapp/globals/app_state.dart';
 import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/models/grocery_item.dart';
@@ -6,12 +7,20 @@ import 'package:homeapp/data/grocery_repository.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_item_tile.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_edit_sheet.dart';
 import 'package:homeapp/pages/grocery/widgets/grocery_add_product_sheet.dart';
+import 'package:homeapp/utils/category_utils.dart';
 
 enum SelectionAction { delete, move, cancel }
 
 enum DetailedListMenuAction { rename, add, delete }
 
 enum BoughtItemsAction { deleteAll }
+
+class _CategorySection {
+  const _CategorySection({required this.categoryKey, required this.items});
+
+  final String categoryKey;
+  final List<GroceryItem> items;
+}
 
 /// Detailed grocery list screen with grouping, editing, and batch actions.
 class GroceryDetailedList extends StatefulWidget {
@@ -256,9 +265,89 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
     );
   }
 
+  List<_CategorySection> _groupItemsByCategory(
+    BuildContext context,
+    List<GroceryItem> items,
+    List<String> categoryOrder,
+  ) {
+    final groupedItems = <String, List<GroceryItem>>{};
+    for (final item in items) {
+      final categoryKey = CategoryUtils.categoryKeyFromRaw(item.category);
+      groupedItems.putIfAbsent(categoryKey, () => <GroceryItem>[]).add(item);
+    }
+
+    for (final categoryItems in groupedItems.values) {
+      categoryItems.sort((a, b) =>
+          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    }
+
+    final categoryIndexes = <String, int>{
+      for (var index = 0; index < categoryOrder.length; index++)
+        categoryOrder[index]: index,
+    };
+
+    final sections = groupedItems.entries
+        .map(
+          (entry) => _CategorySection(
+            categoryKey: entry.key,
+            items: List<GroceryItem>.unmodifiable(entry.value),
+          ),
+        )
+        .toList(growable: false);
+
+    sections.sort((a, b) {
+      final orderCompare = (categoryIndexes[a.categoryKey] ?? categoryOrder.length)
+          .compareTo(categoryIndexes[b.categoryKey] ?? categoryOrder.length);
+      if (orderCompare != 0) return orderCompare;
+
+      return CategoryUtils.localizedCategoryName(context, a.categoryKey)
+          .toLowerCase()
+          .compareTo(
+            CategoryUtils.localizedCategoryName(context, b.categoryKey)
+                .toLowerCase(),
+          );
+    });
+
+    return sections;
+  }
+
+  List<Widget> _buildGroupedItemWidgets(
+    BuildContext context,
+    List<_CategorySection> sections, {
+    required bool isBought,
+  }) {
+    final widgets = <Widget>[];
+
+    for (final section in sections) {
+      for (final item in section.items) {
+        widgets.add(
+          GroceryItemTile(
+            item: item,
+            isBought: isBought,
+            isSelected: _selectedItemIds.contains(item.id),
+            selectionMode: _selectionMode,
+            onToggle: _toggleItem,
+            onDelete: _deleteItem,
+            onLongPress: _startSelection,
+            onTap: (selectedItem) {
+              if (_selectionMode) {
+                _toggleSelection(selectedItem);
+                return;
+              }
+              _showEditModal(selectedItem);
+            },
+          ),
+        );
+      }
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final categoryOrder = AppState.of(context).categoryOrder;
     final listName = widget.lists
             .firstWhere(
               (list) => list['id']?.toString() == widget.repository.listId,
@@ -365,6 +454,10 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
               allItems.where((item) => !item.isBought).toList(growable: false);
           final boughtItems =
               allItems.where((item) => item.isBought).toList(growable: false);
+            final toBuySections =
+              _groupItemsByCategory(context, toBuyItems, categoryOrder);
+            final boughtSections =
+              _groupItemsByCategory(context, boughtItems, categoryOrder);
 
           return Column(
             children: [
@@ -383,28 +476,11 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                         ),
                       ),
                     if (toBuyItems.isNotEmpty)
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = toBuyItems[index];
-                            return GroceryItemTile(
-                              item: item,
-                              isBought: false,
-                              isSelected: _selectedItemIds.contains(item.id),
-                              selectionMode: _selectionMode,
-                              onToggle: _toggleItem,
-                              onDelete: _deleteItem,
-                              onLongPress: _startSelection,
-                              onTap: (selectedItem) {
-                                if (_selectionMode) {
-                                  _toggleSelection(selectedItem);
-                                  return;
-                                }
-                                _showEditModal(selectedItem);
-                              },
-                            );
-                          },
-                          childCount: toBuyItems.length,
+                      SliverList.list(
+                        children: _buildGroupedItemWidgets(
+                          context,
+                          toBuySections,
+                          isBought: false,
                         ),
                       ),
                     if (boughtItems.isNotEmpty) ...[
@@ -465,27 +541,12 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                         ),
                       ),
                       SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = boughtItems[index];
-                            return GroceryItemTile(
-                              item: item,
-                              isBought: true,
-                              isSelected: _selectedItemIds.contains(item.id),
-                              selectionMode: _selectionMode,
-                              onToggle: _toggleItem,
-                              onDelete: _deleteItem,
-                              onLongPress: _startSelection,
-                              onTap: (selectedItem) {
-                                if (_selectionMode) {
-                                  _toggleSelection(selectedItem);
-                                  return;
-                                }
-                                _showEditModal(selectedItem);
-                              },
-                            );
-                          },
-                          childCount: boughtItems.length,
+                        delegate: SliverChildListDelegate(
+                          _buildGroupedItemWidgets(
+                            context,
+                            boughtSections,
+                            isBought: true,
+                          ),
                         ),
                       ),
                     ],

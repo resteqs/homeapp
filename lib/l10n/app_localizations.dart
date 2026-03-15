@@ -290,6 +290,18 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get settingsLanguage;
 
+  /// No description provided for @settingsGroceryCategoryOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Grocery category order'**
+  String get settingsGroceryCategoryOrder;
+
+  /// No description provided for @settingsGroceryCategoryOrderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag categories to match the order you usually walk through the supermarket.'**
+  String get settingsGroceryCategoryOrderHint;
+
   /// No description provided for @langEnglish.
   ///
   /// In en, this message translates to:
