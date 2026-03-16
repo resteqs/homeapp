@@ -66,108 +66,121 @@ class GroceryOverview extends StatelessWidget {
                           .colorScheme
                           .shadow
                           .withValues(alpha: 0.1),
-                      color: Theme.of(context).colorScheme.surface,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       margin: const EdgeInsets.only(bottom: 12),
+                      clipBehavior: Clip.hardEdge,
                       child: InkWell(
+                        splashColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                        highlightColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => onListSelected(listId),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 20),
-                          child: Column(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: () async {
-                                        if (listId.isEmpty) return;
-                                        await onRenameList(
-                                          listId: listId,
-                                          currentName: listName,
-                                        );
-                                      },
-                                      child: Text(
-                                        listName,
-                                        style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      listName,
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: LinearProgressIndicator(
+                                              value: progress,
+                                              minHeight: 8,
+                                              backgroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .outlineVariant,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .primary),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Text(
+                                          '$boughtCount/$totalCount',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              MenuAnchor(
+                                alignmentOffset: const Offset(-24, 0),
+                                style: MenuStyle(
+                                  shape: WidgetStatePropertyAll(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
-                                  PopupMenuButton<ListMenuAction>(
+                                  backgroundColor: WidgetStatePropertyAll(
+                                    Theme.of(context).colorScheme.primaryContainer,
+                                  ),
+                                ),
+                                builder: (context, controller, child) {
+                                  return IconButton(
+                                    constraints: const BoxConstraints(),
                                     padding: EdgeInsets.zero,
-                                    onSelected: (action) async {
-                                      if (action == ListMenuAction.rename) {
-                                        if (listId.isEmpty) return;
-                                        await onRenameList(
-                                          listId: listId,
-                                          currentName: listName,
-                                        );
-                                        return;
-                                      }
-                                      if (action == ListMenuAction.delete) {
-                                        onDeleteList(
-                                            listId: listId, listName: listName);
+                                    onPressed: () {
+                                      if (controller.isOpen) {
+                                        controller.close();
+                                      } else {
+                                        controller.open();
                                       }
                                     },
-                                    itemBuilder: (context) => [
-                                      const PopupMenuItem<ListMenuAction>(
-                                        value: ListMenuAction.rename,
-                                        child: Text('Rename list'),
-                                      ),
-                                      PopupMenuItem<ListMenuAction>(
-                                        value: ListMenuAction.delete,
-                                        child: Text(l10n.groceryDeleteList),
-                                      ),
-                                    ],
                                     icon: Icon(
                                       Icons.more_vert,
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
                                     ),
+                                  );
+                                },
+                                menuChildren: [
+                                  MenuItemButton(
+                                    trailingIcon: const Icon(Icons.edit_outlined),
+                                    onPressed: () async {
+                                      if (listId.isEmpty) return;
+                                      await onRenameList(
+                                        listId: listId,
+                                        currentName: listName,
+                                      );
+                                    },
+                                    child: const Text('Rename list'),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: LinearProgressIndicator(
-                                        value: progress,
-                                        minHeight: 8,
-                                        backgroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Theme.of(context)
-                                                    .colorScheme
-                                                    .primary),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    '$boughtCount/$totalCount',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                      fontSize: 14,
-                                    ),
+                                  MenuItemButton(
+                                    trailingIcon: const Icon(Icons.delete_outline),
+                                    onPressed: () {
+                                      onDeleteList(
+                                          listId: listId, listName: listName);
+                                    },
+                                    child: Text(l10n.groceryDeleteList),
                                   ),
                                 ],
                               ),

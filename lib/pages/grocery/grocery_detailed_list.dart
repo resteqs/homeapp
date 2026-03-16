@@ -398,39 +398,58 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
               onPressed: _clearSelection,
             ),
           if (!_selectionMode)
-            PopupMenuButton<DetailedListMenuAction>(
-              onSelected: (action) async {
-                if (action == DetailedListMenuAction.rename) {
-                  final currentListId = widget.repository.listId;
-                  if (currentListId == null) return;
-                  await widget.onRenameList(
-                    listId: currentListId,
-                    currentName: listName,
-                  );
-                  return;
-                }
-                if (action == DetailedListMenuAction.add) {
-                  await widget.onCreateList();
-                  return;
-                }
-                if (action == DetailedListMenuAction.delete) {
-                  final currentListId = widget.repository.listId;
-                  if (currentListId == null) return;
-                  widget.onDeleteList(
-                      listId: currentListId, listName: listName);
-                }
+            MenuAnchor(
+              alignmentOffset: const Offset(-24, 8),
+              style: MenuStyle(
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                backgroundColor: WidgetStatePropertyAll(
+                  Theme.of(context).colorScheme.primaryContainer,
+                ),
+              ),
+              builder: (context, controller, child) {
+                return IconButton(
+                  onPressed: () {
+                    if (controller.isOpen) {
+                      controller.close();
+                    } else {
+                      controller.open();
+                    }
+                  },
+                  icon: const Icon(Icons.more_vert),
+                );
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem<DetailedListMenuAction>(
-                  value: DetailedListMenuAction.rename,
-                  child: Text('Rename list'),
+              menuChildren: [
+                MenuItemButton(
+                  trailingIcon: const Icon(Icons.edit_outlined),
+                  onPressed: () async {
+                    final currentListId = widget.repository.listId;
+                    if (currentListId == null) return;
+                    await widget.onRenameList(
+                      listId: currentListId,
+                      currentName: listName,
+                    );
+                  },
+                  child: const Text('Rename list'),
                 ),
-                const PopupMenuItem<DetailedListMenuAction>(
-                  value: DetailedListMenuAction.add,
-                  child: Text('New list'),
+                MenuItemButton(
+                  trailingIcon: const Icon(Icons.add),
+                  onPressed: () async {
+                    await widget.onCreateList();
+                  },
+                  child: const Text('New list'),
                 ),
-                PopupMenuItem<DetailedListMenuAction>(
-                  value: DetailedListMenuAction.delete,
+                MenuItemButton(
+                  trailingIcon: const Icon(Icons.delete_outline),
+                  onPressed: () {
+                    final currentListId = widget.repository.listId;
+                    if (currentListId == null) return;
+                    widget.onDeleteList(
+                        listId: currentListId, listName: listName);
+                  },
                   child: Text(l10n.groceryDeleteList),
                 ),
               ],
@@ -517,23 +536,42 @@ class _GroceryDetailedListState extends State<GroceryDetailedList> {
                                     ),
                                   ],
                                 ),
-                                PopupMenuButton<BoughtItemsAction>(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    Icons.more_vert,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                    size: 20,
+                                MenuAnchor(
+                                  alignmentOffset: const Offset(-24, 0),
+                                  style: MenuStyle(
+                                    shape: WidgetStatePropertyAll(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    backgroundColor: WidgetStatePropertyAll(
+                                      Theme.of(context).colorScheme.primaryContainer,
+                                    ),
                                   ),
-                                  onSelected: (action) async {
-                                    if (action == BoughtItemsAction.deleteAll) {
-                                      await _deleteBoughtItems(boughtItems);
-                                    }
+                                  builder: (context, controller, child) {
+                                    return IconButton(
+                                      onPressed: () {
+                                        if (controller.isOpen) {
+                                          controller.close();
+                                        } else {
+                                          controller.open();
+                                        }
+                                      },
+                                      icon: Icon(
+                                        Icons.more_vert,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                        size: 20,
+                                      ),
+                                    );
                                   },
-                                  itemBuilder: (context) => [
-                                    PopupMenuItem<BoughtItemsAction>(
-                                      value: BoughtItemsAction.deleteAll,
+                                  menuChildren: [
+                                    MenuItemButton(
+                                      trailingIcon: const Icon(Icons.delete_sweep_outlined),
+                                      onPressed: () async {
+                                        await _deleteBoughtItems(boughtItems);
+                                      },
                                       child: Text(l10n.groceryDeleteAll),
                                     ),
                                   ],
