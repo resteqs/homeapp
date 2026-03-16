@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/main.dart';
 import 'package:homeapp/utils/category_utils.dart';
 import 'dart:ui' as ui;
@@ -17,8 +16,15 @@ class AppState extends ChangeNotifier {
     return Provider.of<AppState>(context, listen: listen);
   }
 
-  ThemeData _theme = lightTheme;
-  ThemeData get theme => _theme;
+  ThemeMode _themeMode = _loadThemeMode();
+  ThemeMode get themeMode => _themeMode;
+
+  static ThemeMode _loadThemeMode() {
+    final modeString = sharedPrefs.getString('themeMode');
+    if (modeString == 'light') return ThemeMode.light;
+    if (modeString == 'dark') return ThemeMode.dark;
+    return ThemeMode.system;
+  }
 
   Locale _locale = _loadLocale();
   List<String> _categoryOrder = _loadCategoryOrder();
@@ -55,9 +61,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Updates theme and notifies listeners.
-  void changeTheme(ThemeData theme) {
-    _theme = theme;
+  /// Updates theme mode and persists it.
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    final modeString = mode == ThemeMode.light
+        ? 'light'
+        : mode == ThemeMode.dark
+            ? 'dark'
+            : 'system';
+    sharedPrefs.setString('themeMode', modeString);
     notifyListeners();
   }
 }

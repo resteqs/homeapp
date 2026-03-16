@@ -339,9 +339,9 @@ class _AuthPageState extends State<AuthPage> {
                           },
                         ),
                         const SizedBox(height: 18),
-                        ElevatedButton(
+                        FilledButton(
                           onPressed: _isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
+                          style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: Text(_isLoading

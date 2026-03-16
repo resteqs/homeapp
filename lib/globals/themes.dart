@@ -84,10 +84,10 @@ ThemeData _buildLightTheme() {
     onTertiary: Color(0xFFFFFFFF),
     tertiaryContainer: Color(0xFFE6B9B9),
     onTertiaryContainer: Color(0xFF331314),
-    error: Color(0xFFFFB327),
+    error: Color(0xFFBC4749),
     onError: Color(0xFFFFFFFF),
-    errorContainer: Color(0xFFE6D0A8),
-    onErrorContainer: Color(0xFF332408),
+    errorContainer: Color(0xFFE6B9B9),
+    onErrorContainer: Color(0xFF331314),
     surface: Color(0xFFfcfcfc),
     onSurface: Color(0xFF323331),
     surfaceTint: Color(0xFF4F772D), // Matches primary
@@ -124,6 +124,23 @@ ThemeData _buildLightTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
   );
 }
@@ -183,6 +200,23 @@ ThemeData _buildDarkTheme() {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
   );
 }

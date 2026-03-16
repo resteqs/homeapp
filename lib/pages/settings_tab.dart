@@ -70,6 +70,24 @@ class _SettingsTabState extends State<SettingsTab> {
             ],
           ),
           const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(l10n.settingsTheme, style: const TextStyle(fontSize: 16)),
+              SegmentedButton<ThemeMode>(
+                segments: [
+                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.themeSystem)),
+                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.themeLight)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
+                ],
+                selected: {appState.themeMode},
+                onSelectionChanged: (Set<ThemeMode> newSelection) {
+                  AppState.of(context, listen: false).setThemeMode(newSelection.first);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           Text(
             l10n.settingsGroceryCategoryOrder,
             style: Theme.of(context).textTheme.titleMedium,
@@ -155,7 +173,7 @@ class _SettingsTabState extends State<SettingsTab> {
             },
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
+          FilledButton.tonalIcon(
             onPressed: _isSigningOut ? null : _signOut,
             icon: const Icon(Icons.logout),
             label: Text(

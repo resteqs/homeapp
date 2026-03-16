@@ -143,6 +143,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsLanguage => 'Sprache';
 
   @override
+  String get settingsTheme => 'Thema';
+
+  @override
+  String get themeLight => 'Hell';
+
+  @override
+  String get themeDark => 'Dunkel';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
   String get settingsGroceryCategoryOrder =>
       'Reihenfolge der Einkaufskategorien';
 

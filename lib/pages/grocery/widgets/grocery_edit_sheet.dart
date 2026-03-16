@@ -379,8 +379,8 @@ class _GroceryEditSheetState extends State<GroceryEditSheet> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
                             backgroundColor: colorScheme.primary,
                             foregroundColor: colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(

@@ -36,9 +36,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AppState>(create: (context) => AppState()),
       ],
       builder: (context, child) => MaterialApp.router(
-        theme: AppState.of(context).theme,
+        theme: lightTheme,
         darkTheme: darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: AppState.of(context).themeMode,
         locale: AppState.of(context).locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
