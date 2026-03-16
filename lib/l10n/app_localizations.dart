@@ -158,11 +158,23 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get authPassword;
 
-  /// No description provided for @authUsername.
+  /// No description provided for @authFirstName.
   ///
   /// In en, this message translates to:
-  /// **'Username'**
-  String get authUsername;
+  /// **'Name'**
+  String get authFirstName;
+
+  /// No description provided for @authSurname.
+  ///
+  /// In en, this message translates to:
+  /// **'Surname'**
+  String get authSurname;
+
+  /// No description provided for @authNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name and surname.'**
+  String get authNameRequired;
 
   /// No description provided for @authPleaseWait.
   ///
@@ -181,6 +193,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already have an account? Login'**
   String get authLoginPrompt;
+
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back. Sign in to continue.'**
+  String get authLoginSubtitle;
+
+  /// No description provided for @authRegisterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account to get started.'**
+  String get authRegisterSubtitle;
+
+  /// No description provided for @authOrContinueWith.
+  ///
+  /// In en, this message translates to:
+  /// **'or continue with'**
+  String get authOrContinueWith;
+
+  /// No description provided for @authContinueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authContinueWithGoogle;
+
+  /// No description provided for @authContinueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get authContinueWithApple;
+
+  /// No description provided for @authGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google'**
+  String get authGoogle;
+
+  /// No description provided for @authApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple'**
+  String get authApple;
+
+  /// No description provided for @authContinueInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {provider} in your browser.'**
+  String authContinueInBrowser(String provider);
 
   /// No description provided for @authSignupSuccess.
   ///

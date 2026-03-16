@@ -32,7 +32,7 @@ class _HomeTabState extends State<HomeTab> {
 
       final result = await _supabase
           .from('profiles')
-          .select('username')
+          .select('first_name,last_name')
           .eq('id', userId)
           .maybeSingle();
 
@@ -53,6 +53,11 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final user = _supabase.auth.currentUser;
+    final fullNameParts = <String>[
+      ((_profile?['first_name'] as String?) ?? '').trim(),
+      ((_profile?['last_name'] as String?) ?? '').trim(),
+    ].where((part) => part.isNotEmpty).toList();
+    final fullName = fullNameParts.join(' ');
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -71,7 +76,7 @@ class _HomeTabState extends State<HomeTab> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              Text('Username: ${_profile?['username'] ?? 'Unknown'}'),
+              Text('Name: ${fullName.isEmpty ? 'Unknown' : fullName}'),
               const SizedBox(height: 8),
               Text('Email: ${user?.email ?? 'Unknown'}'),
               const SizedBox(height: 8),

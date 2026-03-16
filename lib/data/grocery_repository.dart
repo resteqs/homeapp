@@ -65,8 +65,13 @@ class GroceryRepository extends ChangeNotifier {
     try {
       // Backend bootstrap guarantees profile, household membership, and at least
       // one grocery list before any data read/write.
-      final bootstrap =
-          await _supabase.rpc('ensure_user_household_and_default_lists');
+      final bootstrap = await _supabase.rpc(
+        'ensure_user_household_and_default_lists',
+        params: {
+          'u_first_name': '',
+          'u_last_name': '',
+        },
+      );
       final resolvedListId = bootstrap['grocery_list_id']?.toString();
       final resolvedHouseholdId = await _resolveHouseholdId(bootstrap);
       if (resolvedListId == null || resolvedListId.isEmpty) {

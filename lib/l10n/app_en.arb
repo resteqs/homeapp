@@ -10,10 +10,27 @@
     "authRegister": "Register",
     "authEmail": "Email",
     "authPassword": "Password",
-    "authUsername": "Username",
+    "authFirstName": "Name",
+    "authSurname": "Surname",
+    "authNameRequired": "Please enter your name and surname.",
     "authPleaseWait": "Please wait...",
     "authSignupPrompt": "Don't have an account? Register",
     "authLoginPrompt": "Already have an account? Login",
+    "authLoginSubtitle": "Welcome back. Sign in to continue.",
+    "authRegisterSubtitle": "Create your account to get started.",
+    "authOrContinueWith": "or continue with",
+    "authContinueWithGoogle": "Continue with Google",
+    "authContinueWithApple": "Continue with Apple",
+    "authGoogle": "Google",
+    "authApple": "Apple",
+    "authContinueInBrowser": "Continue with {provider} in your browser.",
+    "@authContinueInBrowser": {
+        "placeholders": {
+            "provider": {
+                "type": "String"
+            }
+        }
+    },
     "authSignupSuccess": "Registration successful! Please check your email.",
     "authSignoutError": "Could not sign out: {error}",
     "@authSignoutError": {

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:homeapp/globals/app_state.dart';
 import 'package:homeapp/globals/router.dart';
+import 'package:homeapp/globals/themes.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 
 late final SharedPreferences sharedPrefs;
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
       ],
       builder: (context, child) => MaterialApp.router(
         theme: AppState.of(context).theme,
-        themeMode: ThemeMode.light,
+        darkTheme: darkTheme,
+        themeMode: ThemeMode.system,
         locale: AppState.of(context).locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

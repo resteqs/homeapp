@@ -39,7 +39,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get authPassword => 'Passwort';
 
   @override
-  String get authUsername => 'Benutzername';
+  String get authFirstName => 'Vorname';
+
+  @override
+  String get authSurname => 'Nachname';
+
+  @override
+  String get authNameRequired => 'Bitte gib deinen Vor- und Nachnamen ein.';
 
   @override
   String get authPleaseWait => 'Bitte warten...';
@@ -49,6 +55,33 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get authLoginPrompt => 'Bereits ein Konto? Einloggen';
+
+  @override
+  String get authLoginSubtitle =>
+      'Willkommen zuruck. Melde dich an, um weiterzumachen.';
+
+  @override
+  String get authRegisterSubtitle => 'Erstelle dein Konto, um zu starten.';
+
+  @override
+  String get authOrContinueWith => 'oder weiter mit';
+
+  @override
+  String get authContinueWithGoogle => 'Mit Google fortfahren';
+
+  @override
+  String get authContinueWithApple => 'Mit Apple fortfahren';
+
+  @override
+  String get authGoogle => 'Google';
+
+  @override
+  String get authApple => 'Apple';
+
+  @override
+  String authContinueInBrowser(String provider) {
+    return 'Fahre mit $provider im Browser fort.';
+  }
 
   @override
   String get authSignupSuccess =>

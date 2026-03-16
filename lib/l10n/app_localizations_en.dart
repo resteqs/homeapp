@@ -39,7 +39,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPassword => 'Password';
 
   @override
-  String get authUsername => 'Username';
+  String get authFirstName => 'Name';
+
+  @override
+  String get authSurname => 'Surname';
+
+  @override
+  String get authNameRequired => 'Please enter your name and surname.';
 
   @override
   String get authPleaseWait => 'Please wait...';
@@ -49,6 +55,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authLoginPrompt => 'Already have an account? Login';
+
+  @override
+  String get authLoginSubtitle => 'Welcome back. Sign in to continue.';
+
+  @override
+  String get authRegisterSubtitle => 'Create your account to get started.';
+
+  @override
+  String get authOrContinueWith => 'or continue with';
+
+  @override
+  String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authContinueWithApple => 'Continue with Apple';
+
+  @override
+  String get authGoogle => 'Google';
+
+  @override
+  String get authApple => 'Apple';
+
+  @override
+  String authContinueInBrowser(String provider) {
+    return 'Continue with $provider in your browser.';
+  }
 
   @override
   String get authSignupSuccess =>

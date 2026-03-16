@@ -72,58 +72,120 @@ abstract final class AppCategoryColors {
 ThemeData _buildLightTheme() {
   const colorScheme = ColorScheme(
     brightness: Brightness.light,
-    primary: AppColors.accent,
-    onPrimary: AppColors.white,
-    primaryContainer: AppColors.accent,
-    onPrimaryContainer: AppColors.white,
-    secondary: AppColors.accentStrong,
-    onSecondary: AppColors.black,
-    secondaryContainer: AppColors.greenLight,
-    onSecondaryContainer: AppColors.black,
-    tertiary: AppColors.greenDark,
-    onTertiary: AppColors.black,
-    tertiaryContainer: AppColors.greenLight,
-    onTertiaryContainer: AppColors.black,
-    error: AppColors.redMain,
-    onError: AppColors.white,
-    errorContainer: AppColors.redLight,
-    onErrorContainer: AppColors.redMain,
-    surface: AppColors.surfaceLight,
-    onSurface: AppColors.textOnLight,
-    onSurfaceVariant: AppColors.gray700,
-    outline: AppColors.gray300,
-    outlineVariant: AppColors.gray200,
-    shadow: AppColors.black,
-    scrim: AppColors.black,
-    inverseSurface: AppColors.white,
-    onInverseSurface: AppColors.black,
-    inversePrimary: AppColors.blueMain,
-    surfaceTint: AppColors.greenLight,
-    surfaceContainerLowest: AppColors.white,
-    surfaceContainerLow: AppColors.white,
-    surfaceContainer: AppColors.gray100,
-    surfaceContainerHigh: AppColors.gray100,
-    surfaceContainerHighest: AppColors.gray100,
+    primary: Color(0xFF4F772D),
+    onPrimary: Color(0xFFFFFFFF),
+    primaryContainer: Color(0xFFCDE6B9),
+    onPrimaryContainer: Color(0xFF223313),
+    secondary: Color(0xFF4F772D),
+    onSecondary: Color(0xFFFFFFFF),
+    secondaryContainer: Color(0xFFCDE6B9),
+    onSecondaryContainer: Color(0xFF223313),
+    tertiary: Color(0xFFBC4749),
+    onTertiary: Color(0xFFFFFFFF),
+    tertiaryContainer: Color(0xFFE6B9B9),
+    onTertiaryContainer: Color(0xFF331314),
+    error: Color(0xFFFFB327),
+    onError: Color(0xFFFFFFFF),
+    errorContainer: Color(0xFFE6D0A8),
+    onErrorContainer: Color(0xFF332408),
+    surface: Color(0xFFfcfcfc),
+    onSurface: Color(0xFF323331),
+    surfaceTint: Color(0xFF4F772D), // Matches primary
+    surfaceContainerHighest: Color(0xFFe1e6dd), // Replaces surfaceVariant
+    onSurfaceVariant: Color(0xFF5f6659),
+    outline: Color(0xFF8f9986),
   );
 
   return ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.pageBackgroundLight,
     colorScheme: colorScheme,
-    progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: AppColors.blueMain,
-      linearTrackColor: AppColors.gray200,
+    scaffoldBackgroundColor: colorScheme.surface,
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: colorScheme.primary,
+      linearTrackColor: colorScheme.surfaceContainerHighest,
     ),
-    textTheme: const TextTheme().apply(
-      bodyColor: AppColors.textOnLight,
-      displayColor: AppColors.textOnLight,
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.pageBackgroundLight,
-      foregroundColor: AppColors.textOnLight,
+    appBarTheme: AppBarTheme(
+      backgroundColor: colorScheme.surface,
+      foregroundColor: colorScheme.onSurface,
       elevation: 0,
+      centerTitle: true,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: colorScheme.primaryContainer,
+      foregroundColor: colorScheme.onPrimaryContainer,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+  );
+}
+
+ThemeData _buildDarkTheme() {
+  const colorScheme = ColorScheme(
+    brightness: Brightness.dark,
+    primary: Color(0xFFC3E6A6),
+    onPrimary: Color(0xFF324C1D),
+    primaryContainer: Color(0xFF436627),
+    onPrimaryContainer: Color(0xFFCDE6B9),
+    secondary: Color(0xFFC3E6A6),
+    onSecondary: Color(0xFF324C1D),
+    secondaryContainer: Color(0xFF436627),
+    onSecondaryContainer: Color(0xFFCDE6B9),
+    tertiary: Color(0xFFE6A6A7),
+    onTertiary: Color(0xFF4C1D1E),
+    tertiaryContainer: Color(0xFF662728),
+    onTertiaryContainer: Color(0xFFE6B9B9),
+    error: Color(0xFFE6C78E),
+    onError: Color(0xFF4C360B),
+    errorContainer: Color(0xFF66470F),
+    onErrorContainer: Color(0xFFE6D0A8),
+    surface: Color(0xFF323331),
+    onSurface: Color(0xFFe4e6e3),
+    surfaceTint: Color(0xFFC3E6A6), // Matches primary
+    surfaceContainerHighest: Color(0xFF5f6659), // Replaces surfaceVariant
+    onSurfaceVariant: Color(0xFFdfe6d9),
+    outline: Color(0xFFabb3a5),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: colorScheme.surface,
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: colorScheme.primary,
+      linearTrackColor: colorScheme.surfaceContainerHighest,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: colorScheme.surface,
+      foregroundColor: colorScheme.onSurface,
+      elevation: 0,
+      centerTitle: true,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: colorScheme.primaryContainer,
+      foregroundColor: colorScheme.onPrimaryContainer,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
     ),
   );
 }
 
 final ThemeData lightTheme = _buildLightTheme();
+final ThemeData darkTheme = _buildDarkTheme();

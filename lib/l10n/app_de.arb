@@ -10,10 +10,27 @@
     "authRegister": "Registrieren",
     "authEmail": "E-Mail",
     "authPassword": "Passwort",
-    "authUsername": "Benutzername",
+    "authFirstName": "Vorname",
+    "authSurname": "Nachname",
+    "authNameRequired": "Bitte gib deinen Vor- und Nachnamen ein.",
     "authPleaseWait": "Bitte warten...",
     "authSignupPrompt": "Noch kein Konto? Registrieren",
     "authLoginPrompt": "Bereits ein Konto? Einloggen",
+    "authLoginSubtitle": "Willkommen zuruck. Melde dich an, um weiterzumachen.",
+    "authRegisterSubtitle": "Erstelle dein Konto, um zu starten.",
+    "authOrContinueWith": "oder weiter mit",
+    "authContinueWithGoogle": "Mit Google fortfahren",
+    "authContinueWithApple": "Mit Apple fortfahren",
+    "authGoogle": "Google",
+    "authApple": "Apple",
+    "authContinueInBrowser": "Fahre mit {provider} im Browser fort.",
+    "@authContinueInBrowser": {
+        "placeholders": {
+            "provider": {
+                "type": "String"
+            }
+        }
+    },
     "authSignupSuccess": "Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail.",
     "authSignoutError": "Abmelden fehlgeschlagen: {error}",
     "authUnexpectedError": "Unerwarteter Fehler aufgetreten: {error}",
