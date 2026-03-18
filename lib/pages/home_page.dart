@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
+import 'package:homeapp/globals/transitions.dart';
 import 'home_tab.dart';
 import 'grocery_tab.dart';
 import 'settings_tab.dart';
@@ -20,15 +22,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: [
-            const HomeTab(),
-            const GroceryTab(),
-            const Center(child: Text('Chore Tab')),
-            const Center(child: Text('Finance Tab')),
-            const SettingsTab(),
-          ],
+        child: PageTransitionSwitcher(
+          duration: const Duration(milliseconds: 420),
+          transitionBuilder: zoomFadeTransitionBuilder,
+          child: switch (_currentIndex) {
+            0 => const HomeTab(),
+            1 => const GroceryTab(),
+            2 => const Center(child: Text('Chore Tab')),
+            3 => const Center(child: Text('Finance Tab')),
+            4 => const SettingsTab(),
+            _ => const SizedBox.shrink(),
+          },
         ),
       ),
       bottomNavigationBar: NavigationBar(

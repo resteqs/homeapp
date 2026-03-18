@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
+import 'package:homeapp/globals/transitions.dart';
 
 /// Centralized color tokens for the whole app.
 ///
@@ -142,6 +144,13 @@ ThemeData _buildLightTheme() {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.iOS: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.macOS: ZoomFadePageTransitionsBuilder(),
+      },
+    ),
   );
 }
 
@@ -217,6 +226,13 @@ ThemeData _buildDarkTheme() {
         borderSide: BorderSide(color: colorScheme.primary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.iOS: ZoomFadePageTransitionsBuilder(),
+        TargetPlatform.macOS: ZoomFadePageTransitionsBuilder(),
+      },
     ),
   );
 }

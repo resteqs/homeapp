@@ -5,6 +5,8 @@ import 'package:homeapp/data/local_grocery_store.dart';
 import 'package:homeapp/l10n/app_localizations.dart';
 import 'package:homeapp/pages/grocery/grocery_overview.dart';
 import 'package:homeapp/pages/grocery/grocery_detailed_list.dart';
+import 'package:animations/animations.dart';
+import 'package:homeapp/globals/transitions.dart';
 
 /// Grocery feature host widget.
 ///
@@ -207,8 +209,10 @@ class _GroceryTabState extends State<GroceryTab> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
+    return PageTransitionSwitcher(
+      duration: const Duration(milliseconds: 420),
+      reverse: _showingOverview,
+      transitionBuilder: zoomFadeTransitionBuilder,
       child: _showingOverview
           ? GroceryOverview(
               lists: _lists,
